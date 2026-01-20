@@ -23,3 +23,19 @@ export interface VelarComponentMeta {
         composer?: string[];
     };
 }
+
+
+export interface VelarConfig {
+  version: string;
+
+  theme: string;
+
+  css: {
+    entry: string;
+    velar: string;
+  };
+
+  components: {
+    path: string;
+  };
+}

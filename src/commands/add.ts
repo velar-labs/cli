@@ -3,10 +3,10 @@ import { Command } from 'commander';
 import prompts from 'prompts';
 
 import { readVelarConfig } from '../utils/config.js';
-import { readRegistry, getComponentMeta, getComponentFiles } from '../utils/registry.js';
+import { readRegistry, getComponentMeta } from '../utils/registry.js';
 import { resolveDependencies } from '../utils/deps.js';
 import { checkRequirements, hasAlpineInProject } from '../utils/requirements.js';
-import { ensureDir, fileExists, copyFile } from '../utils/filesystem.js';
+import { fileExists, copyFile } from '../utils/filesystem.js';
 import path from 'path';
 import type { VelarComponentMeta } from '../types/meta.js';
 
@@ -20,7 +20,7 @@ export default function registerAddCommand(program: Command) {
       let config;
       try {
         config = readVelarConfig();
-      } catch (e) {
+      } catch {
         console.error('✖ Velar is not initialized.');
         console.error('→ Run velar init first.');
         process.exit(1);
@@ -36,7 +36,7 @@ export default function registerAddCommand(program: Command) {
       let registry;
       try {
         registry = readRegistry(registryPath);
-      } catch (e) {
+      } catch {
         console.error('✖ Registry not found.');
         process.exit(1);
       }
@@ -58,7 +58,7 @@ export default function registerAddCommand(program: Command) {
         components = res.selected;
       }
 
-      // Permet add button tabs ...
+      // Permit add button tabs ...
       for (const component of components) {
         if (!registry.components[component]) {
           console.error(`✖ Component "${component}" not found.`);
@@ -67,13 +67,13 @@ export default function registerAddCommand(program: Command) {
         }
       }
 
-      // Pour chaque composant demandé
+      // For each requested component 
       for (const component of components) {
         // 4. Read component meta
         let meta: VelarComponentMeta;
         try {
           meta = getComponentMeta(registryPath, component);
-        } catch (e) {
+        } catch {
           console.error(`✖ Component "${component}" not found.`);
           process.exit(1);
         }
@@ -133,7 +133,7 @@ export default function registerAddCommand(program: Command) {
             try {
               copyFile(src, dest);
               summary.push(`Added ${name}`);
-            } catch (e) {
+            } catch {
               summary.push(`Failed to add ${name}`);
             }
           }

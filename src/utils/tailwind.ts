@@ -1,6 +1,11 @@
 import fs from 'fs';
 
-export function readPackageJson(): any | null {
+interface PackageJson {
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
+}
+
+export function readPackageJson(): PackageJson | null {
   try {
     return JSON.parse(fs.readFileSync('package.json', 'utf8'));
   } catch {
@@ -8,7 +13,7 @@ export function readPackageJson(): any | null {
   }
 }
 
-export function detectTailwindV4(pkg: any): boolean {
+export function detectTailwindV4(pkg: PackageJson): boolean {
   const deps = { ...pkg.dependencies, ...pkg.devDependencies };
   if (deps['@tailwindcss/vite'] || deps['@tailwindcss/postcss']) {
     return true;

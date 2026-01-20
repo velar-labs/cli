@@ -1,4 +1,6 @@
-export function resolveDependencies(meta: any, registry: any): string[] {
+import type { VelarComponentMeta } from "../types/meta.js";
+
+export function resolveDependencies(meta: VelarComponentMeta, registry: any): string[] {
   // Simple DAG: flat, no cycles
   const resolved: Set<string> = new Set();
   function visit(name: string) {

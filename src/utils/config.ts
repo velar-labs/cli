@@ -1,18 +1,22 @@
 import fs from 'fs';
+import type { VelarConfig } from '../types/meta.js';
 
-export function writeVelarConfig(config: any) {
+export function writeVelarConfig(config: VelarConfig) {
   fs.writeFileSync('velar.json', JSON.stringify(config, null, 2) + '\n', 'utf8');
 }
 
-export function readVelarConfig(): any | null {
+export function readVelarConfig(): VelarConfig {
   if (!fs.existsSync('velar.json')) {
-    return null;
+    throw new Error('Velar configuration not found.');
   }
   return JSON.parse(fs.readFileSync('velar.json', 'utf8'));
 }
 
-export function updateVelarConfig(updates: any) {
-  const config = readVelarConfig() || {};
+export function updateVelarConfig(updates: Partial<VelarConfig>) {
+  const config = readVelarConfig();
+  if (!config) {
+    throw new Error('Velar configuration not found.');
+  }
   const newConfig = { ...config, ...updates };
   writeVelarConfig(newConfig);
 }
