@@ -1,4 +1,5 @@
-
+#!/usr/bin/env node
+import chalk from 'chalk';
 import { Command } from 'commander';
 import prompts from 'prompts';
 
@@ -12,17 +13,19 @@ import type { VelarComponentMeta } from '../types/meta.js';
 
 export default function registerAddCommand(program: Command) {
 
+
   program
-    .command('add [components...]')
+    .command('add')
+    .argument('[components...]', 'Names of components to add')
     .description('Add one or more UI components to your Laravel project')
-    .action(async (components: string[]) => {
+    .action(async (components?: string[]) => {
       // 1. Check velar.json
       let config;
       try {
         config = readVelarConfig();
       } catch {
-        console.error('✖ Velar is not initialized.');
-        console.error('→ Run velar init first.');
+        console.error(chalk.red('✖ Velar is not initialized.'));
+        console.error(chalk.yellow('→ Run velar init first.'));
         process.exit(1);
       }
 
@@ -45,7 +48,7 @@ export default function registerAddCommand(program: Command) {
       if (!components || components.length === 0) {
         const available = Object.keys(registry.components);
         const res = await prompts({
-          type: 'multiselect',
+          type: 'autocompleteMultiselect',
           name: 'selected',
           message: 'Select components to add',
           choices: available.map(c => ({ title: c, value: c })),
@@ -55,7 +58,7 @@ export default function registerAddCommand(program: Command) {
           console.log('✖ No component selected.');
           process.exit(0);
         }
-        components = res.selected;
+        components = res.selected as string[];
       }
 
       // Permit add button tabs ...
