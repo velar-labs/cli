@@ -12,6 +12,8 @@ import {
 import { logger } from "../utils/logger.js";
 import { HttpService } from "./HttpService.js";
 
+import { spinner } from "../utils/spinner.js";
+
 /**
  * Service for interacting with the Velar component registry
  */
@@ -33,9 +35,14 @@ export class RegistryService implements IRegistryService {
    */
   async fetchRegistry(): Promise<RegistryData> {
     try {
-      return await fetchGitHubRegistry();
+      return await spinner.withTask(
+        "Fetching registry...",
+        () => fetchGitHubRegistry(),
+        undefined,
+        "Failed to fetch registry",
+      );
     } catch (error) {
-      logger.error("Failed to fetch registry");
+      // Error is already logged by spinner.withTask or within fetchGitHubRegistry
       throw error;
     }
   }
@@ -49,10 +56,14 @@ export class RegistryService implements IRegistryService {
    */
   async fetchComponent(name: string): Promise<VelarComponentMeta> {
     try {
-      const file = await fetchComponent(name);
+      const file = await spinner.withTask(
+        `Fetching component "${name}" metadata...`,
+        () => fetchComponent(name),
+        undefined,
+        `Failed to fetch component "${name}"`,
+      );
       return await this.parseComponentMeta(file);
     } catch (error) {
-      logger.error(`Failed to fetch component "${name}"`);
       throw error;
     }
   }
@@ -68,11 +79,13 @@ export class RegistryService implements IRegistryService {
   async fetchFile(componentUrl: string, path: string): Promise<string> {
     try {
       const componentName = componentUrl.split("/").pop() || componentUrl;
-      return await fetchComponentFile(componentName, path);
-    } catch (error) {
-      logger.error(
-        `Failed to fetch file "${path}" for component "${componentUrl}"`,
+      return await spinner.withTask(
+        `Downloading ${path}...`,
+        () => fetchComponentFile(componentName, path),
+        undefined,
+        `Failed to fetch file "${path}"`,
       );
+    } catch (error) {
       throw error;
     }
   }

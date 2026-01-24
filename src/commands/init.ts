@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import prompts from "prompts";
+import * as p from "@clack/prompts";
 import { logger } from "../utils/logger.js";
 import { FileSystemService } from "../services/FileSystemService.js";
 import { InitService } from "../services/InitService.js";
@@ -14,20 +14,22 @@ import type { PackageManager, VelarTheme } from "../types/index.js";
 async function promptPackageManager(
   detectedPm: PackageManager,
 ): Promise<PackageManager | undefined> {
-  const packageManagerPrompt = await prompts({
-    type: "select",
-    name: "packageManager",
+  const packageManager = await p.select({
     message: "Which package manager are you using?",
-    choices: [
-      { title: "npm", value: "npm" },
-      { title: "yarn", value: "yarn" },
-      { title: "pnpm", value: "pnpm" },
-      { title: "bun", value: "bun" },
+    options: [
+      { label: "npm", value: "npm" },
+      { label: "yarn", value: "yarn" },
+      { label: "pnpm", value: "pnpm" },
+      { label: "bun", value: "bun" },
     ],
-    initial: ["npm", "yarn", "pnpm", "bun"].indexOf(detectedPm),
+    initialValue: detectedPm,
   });
 
-  return packageManagerPrompt.packageManager as PackageManager | undefined;
+  if (p.isCancel(packageManager)) {
+    return undefined;
+  }
+
+  return packageManager as PackageManager;
 }
 
 /**
@@ -35,18 +37,19 @@ async function promptPackageManager(
  * @returns Selected theme or undefined if aborted
  */
 async function promptTheme(): Promise<VelarTheme | undefined> {
-  const themePrompt = await prompts({
-    type: "select",
-    name: "theme",
+  const theme = await p.select({
     message: "Choose a base color theme",
-    choices: THEMES.map((t) => ({
-      title: t.charAt(0).toUpperCase() + t.slice(1),
+    options: THEMES.map((t) => ({
+      label: t.charAt(0).toUpperCase() + t.slice(1),
       value: t,
     })),
-    initial: 0,
   });
 
-  return themePrompt.theme as VelarTheme | undefined;
+  if (p.isCancel(theme)) {
+    return undefined;
+  }
+
+  return theme as VelarTheme;
 }
 
 /**
@@ -54,14 +57,16 @@ async function promptTheme(): Promise<VelarTheme | undefined> {
  * @returns True if user wants to import styles
  */
 async function promptStyleImport(): Promise<boolean> {
-  const res = await prompts({
-    type: "confirm",
-    name: "import",
+  const shouldImport = await p.confirm({
     message: "Import Velar styles into your main CSS file?",
-    initial: true,
+    initialValue: true,
   });
 
-  return Boolean(res.import);
+  if (p.isCancel(shouldImport)) {
+    return false;
+  }
+
+  return shouldImport;
 }
 
 /**

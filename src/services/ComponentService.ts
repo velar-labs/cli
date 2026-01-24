@@ -6,7 +6,7 @@ import type {
 import type { IRegistryService } from "../types/interfaces.js";
 import type { IFileSystemService } from "../types/interfaces.js";
 import type { IConfigManager } from "../types/interfaces.js";
-import prompts from "prompts";
+import * as p from "@clack/prompts";
 import path from "path";
 import { logger } from "../utils/logger.js";
 import { FileSystemService } from "./FileSystemService.js";
@@ -165,18 +165,20 @@ export class ComponentService {
   private async handleFileConflict(
     filePath: string,
   ): Promise<"skip" | "overwrite" | "cancel"> {
-    const res = await prompts({
-      type: "select",
-      name: "action",
-      message: `⚠ File "${filePath}" already exists.\nWhat do you want to do?`,
-      choices: [
-        { title: "Skip", value: "skip" },
-        { title: "Overwrite", value: "overwrite" },
-        { title: "Cancel", value: "cancel" },
+    const action = await p.select({
+      message: `File "${filePath}" already exists. What do you want to do?`,
+      options: [
+        { label: "Skip", value: "skip" },
+        { label: "Overwrite", value: "overwrite" },
+        { label: "Cancel", value: "cancel" },
       ],
-      initial: 0,
+      initialValue: "skip",
     });
 
-    return (res.action as "skip" | "overwrite" | "cancel") ?? "skip";
+    if (p.isCancel(action)) {
+      return "cancel";
+    }
+
+    return action as "skip" | "overwrite" | "cancel";
   }
 }

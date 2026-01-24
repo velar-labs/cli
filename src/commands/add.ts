@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { Command } from "commander";
-import prompts from "prompts";
+import * as p from "@clack/prompts";
 import { RegistryService } from "../services/RegistryService.js";
 import { ConfigManager } from "../config/ConfigManager.js";
 import { AddService } from "../services/AddService.js";
@@ -15,15 +15,17 @@ import { logger } from "../utils/logger.js";
 async function promptComponentSelection(
   availableComponents: readonly string[],
 ): Promise<string[] | undefined> {
-  const res = await prompts({
-    type: "multiselect",
-    name: "selected",
+  const selected = await p.multiselect({
     message: "Select components to add",
-    choices: availableComponents.map((name) => ({ title: name, value: name })),
-    min: 1,
+    options: availableComponents.map((name) => ({ label: name, value: name })),
+    required: true,
   });
 
-  return res.selected as string[] | undefined;
+  if (p.isCancel(selected)) {
+    return undefined;
+  }
+
+  return selected as string[];
 }
 
 /**
@@ -55,14 +57,14 @@ export default function registerAddCommand(program: Command): void {
           process.exit(1);
         }
 
-        // 3. Load registry
+        // 3. Load registry (spinner handle inside addService/registryService)
         const registry = await addService.getAvailableComponents();
 
         // 4. Prompt for components if none provided
         let componentNames = components;
         if (!componentNames || componentNames.length === 0) {
           const available = registry.components.map((c) => c.name);
-          const selected = await promptComponentSelection(available);
+          const selected = await promptComponentSelection(available.sort((a, b) => a.localeCompare(b)));
 
           if (!selected || selected.length === 0) {
             logger.warning("No component selected");

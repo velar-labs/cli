@@ -26,7 +26,7 @@ export class ConfigManager implements IConfigManager {
       }
       return this.config;
     } catch (error) {
-      logger.error("Failed to load configuration");
+      logger.error("Failed to load configuration", (error as Error).message);
       throw error;
     }
   }
