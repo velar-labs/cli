@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { HttpService } from "../../services/HttpService.js";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NetworkError } from "../../errors/errors.js";
+import { HttpService } from "../../services/HttpService.js";
 
 describe("HttpService", () => {
   let httpService: HttpService;
@@ -37,6 +37,7 @@ describe("HttpService", () => {
 
       const fetchPromise = httpService.fetch("http://example.com", {
         initialDelay: 10,
+        maxRetries: 1,
       });
 
       // Wait for first attempt
@@ -59,22 +60,24 @@ describe("HttpService", () => {
         initialDelay: 10,
       });
 
+      const expectPromise = expect(fetchPromise).rejects.toThrow(NetworkError);
+
       await vi.advanceTimersByTimeAsync(0); // 1st
       await vi.advanceTimersByTimeAsync(10); // 2nd
       await vi.advanceTimersByTimeAsync(20); // 3rd
 
-      await expect(fetchPromise).rejects.toThrow(NetworkError);
+      await expectPromise;
     });
 
     it("should handle timeout", async () => {
       vi.mocked(fetch).mockImplementation(async (url, options) => {
         return new Promise((resolve, reject) => {
           if (options?.signal) {
-            options.signal.addEventListener("abort", () => {
+            options.signal.onabort = () => {
               const error = new Error("AbortError");
               error.name = "AbortError";
               reject(error);
-            });
+            };
           }
         });
       });
@@ -84,9 +87,11 @@ describe("HttpService", () => {
         maxRetries: 0,
       });
 
+      const expectPromise = expect(fetchPromise).rejects.toThrow(NetworkError);
+
       await vi.advanceTimersByTimeAsync(100);
 
-      await expect(fetchPromise).rejects.toThrow(NetworkError);
+      await expectPromise;
     });
   });
 
@@ -117,7 +122,9 @@ describe("HttpService", () => {
       const mockResponse = new Response("invalid json", { status: 200 });
       vi.mocked(fetch).mockResolvedValue(mockResponse);
 
-      await expect(httpService.fetchJson("http://example.com")).rejects.toThrow(NetworkError);
+      await expect(httpService.fetchJson("http://example.com")).rejects.toThrow(
+        NetworkError,
+      );
     });
   });
 
@@ -139,8 +146,6 @@ describe("HttpService", () => {
       const fetchPromise = httpService.fetchText("http://example.com", {
         maxRetries: 0,
       });
-
-      await vi.advanceTimersByTimeAsync(0);
 
       await expect(fetchPromise).rejects.toThrow(NetworkError);
     });
