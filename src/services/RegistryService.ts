@@ -1,15 +1,15 @@
 import type {
-  VelarComponentMeta,
-  RegistryData,
   GitHubFile,
+  RegistryData,
+  VelarComponentMeta,
 } from "../types/index.js";
 import type { IRegistryService } from "../types/interfaces.js";
 import {
-  fetchGitHubRegistry,
   fetchComponent,
   fetchComponentFile,
+  fetchGitHubRegistry,
 } from "../utils/remote-registry.js";
-import { logger } from "../utils/logger.js";
+
 import { HttpService } from "./HttpService.js";
 
 import { spinner } from "../utils/spinner.js";
@@ -34,17 +34,12 @@ export class RegistryService implements IRegistryService {
    * @throws NetworkError if fetch fails
    */
   async fetchRegistry(): Promise<RegistryData> {
-    try {
-      return await spinner.withTask(
-        "Fetching registry...",
-        () => fetchGitHubRegistry(),
-        undefined,
-        "Failed to fetch registry",
-      );
-    } catch (error) {
-      // Error is already logged by spinner.withTask or within fetchGitHubRegistry
-      throw error;
-    }
+    return await spinner.withTask(
+      "Fetching registry...",
+      () => fetchGitHubRegistry(),
+      undefined,
+      "Failed to fetch registry",
+    );
   }
 
   /**
@@ -55,17 +50,13 @@ export class RegistryService implements IRegistryService {
    * @throws NetworkError if fetch fails
    */
   async fetchComponent(name: string): Promise<VelarComponentMeta> {
-    try {
-      const file = await spinner.withTask(
-        `Fetching component "${name}" metadata...`,
-        () => fetchComponent(name),
-        undefined,
-        `Failed to fetch component "${name}"`,
-      );
-      return await this.parseComponentMeta(file);
-    } catch (error) {
-      throw error;
-    }
+    const file = await spinner.withTask(
+      `Fetching component "${name}" metadata...`,
+      () => fetchComponent(name),
+      undefined,
+      `Failed to fetch component "${name}"`,
+    );
+    return await this.parseComponentMeta(file);
   }
 
   /**
@@ -77,17 +68,13 @@ export class RegistryService implements IRegistryService {
    * @throws NetworkError if fetch fails
    */
   async fetchFile(componentUrl: string, path: string): Promise<string> {
-    try {
-      const componentName = componentUrl.split("/").pop() || componentUrl;
-      return await spinner.withTask(
-        `Downloading ${path}...`,
-        () => fetchComponentFile(componentName, path),
-        undefined,
-        `Failed to fetch file "${path}"`,
-      );
-    } catch (error) {
-      throw error;
-    }
+    const componentName = componentUrl.split("/").pop() || componentUrl;
+    return await spinner.withTask(
+      `Downloading ${path}...`,
+      () => fetchComponentFile(componentName, path),
+      undefined,
+      `Failed to fetch file "${path}"`,
+    );
   }
 
   /**

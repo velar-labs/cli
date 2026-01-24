@@ -21,8 +21,8 @@
     "node": ">=20"
   },
   "scripts": {
-    "dev": "tsc --watch & pnpm copy-themes:watch",
-    "build": "tsc && pnpm copy-themes",
+    "dev": "tsc --watch & tsc-alias --watch & pnpm copy-themes:watch",
+    "build": "tsc && tsc-alias && pnpm copy-themes",
     "copy-themes": "cp -r src/registry/themes dist/registry/",
     "copy-themes:watch": "while true; do pnpm copy-themes; sleep 2; done",
     "lint": "eslint .",
@@ -56,6 +56,7 @@
     "globals": "^17.0.0",
     "jiti": "^2.6.1",
     "prettier": "3.8.0",
+    "tsc-alias": "^1.8.16",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.53.0",
     "vitest": "^4.0.18"

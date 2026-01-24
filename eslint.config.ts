@@ -1,9 +1,9 @@
 import js from "@eslint/js";
-import globals from "globals";
-import tseslint from "typescript-eslint";
 import json from "@eslint/json";
 import markdown from "@eslint/markdown";
 import { defineConfig, globalIgnores } from "eslint/config";
+import globals from "globals";
+import tseslint from "typescript-eslint";
 
 export default defineConfig(
   [
@@ -14,7 +14,7 @@ export default defineConfig(
       languageOptions: { globals: globals.browser },
     },
     tseslint.configs.recommended,
-    globalIgnores(["node_modules/**", "dist/**"]),
+    globalIgnores(["node_modules/**", "dist/**", "src/__tests__"]),
     // {
     //   files: ["**/*.json"],
     //   plugins: { json },

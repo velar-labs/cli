@@ -1,11 +1,11 @@
 #!/usr/bin/env node
-import { Command } from "commander";
+import { ConfigManager } from "@/config/ConfigManager.js";
+import { ErrorHandler } from "@/errors/ErrorHandler.js";
+import { AddService } from "@/services/AddService.js";
+import { RegistryService } from "@/services/RegistryService.js";
+import { logger } from "@/utils/logger.js";
 import * as p from "@clack/prompts";
-import { RegistryService } from "../services/RegistryService.js";
-import { ConfigManager } from "../config/ConfigManager.js";
-import { AddService } from "../services/AddService.js";
-import { ErrorHandler } from "../errors/ErrorHandler.js";
-import { logger } from "../utils/logger.js";
+import { Command } from "commander";
 
 /**
  * Prompt user to select components
@@ -64,7 +64,9 @@ export default function registerAddCommand(program: Command): void {
         let componentNames = components;
         if (!componentNames || componentNames.length === 0) {
           const available = registry.components.map((c) => c.name);
-          const selected = await promptComponentSelection(available.sort((a, b) => a.localeCompare(b)));
+          const selected = await promptComponentSelection(
+            available.sort((a, b) => a.localeCompare(b)),
+          );
 
           if (!selected || selected.length === 0) {
             logger.warning("No component selected");
