@@ -1,18 +1,30 @@
 import fs from "fs";
 
+/**
+ * Package.json structure
+ */
 interface PackageJson {
-  dependencies?: Record<string, string>;
-  devDependencies?: Record<string, string>;
+  dependencies?: Readonly<Record<string, string>>;
+  devDependencies?: Readonly<Record<string, string>>;
 }
 
+/**
+ * Read package.json file
+ * @returns Package.json object or null if file doesn't exist or is invalid
+ */
 export function readPackageJson(): PackageJson | null {
   try {
-    return JSON.parse(fs.readFileSync("package.json", "utf8"));
+    return JSON.parse(fs.readFileSync("package.json", "utf8")) as PackageJson;
   } catch {
     return null;
   }
 }
 
+/**
+ * Detect if Tailwind CSS v4 is installed
+ * @param pkg - Package.json object
+ * @returns True if Tailwind v4 is detected
+ */
 export function detectTailwindV4(pkg: PackageJson): boolean {
   const deps = { ...pkg.dependencies, ...pkg.devDependencies };
   if (deps["@tailwindcss/vite"] || deps["@tailwindcss/postcss"]) {

@@ -1,6 +1,11 @@
 import fs from "fs";
+import type { PackageManager } from "../types/index.js";
 
-export function detectPackageManager(): string {
+/**
+ * Detect the package manager used in the project
+ * @returns Detected package manager name (defaults to "npm")
+ */
+export function detectPackageManager(): PackageManager {
   // Check lock files
   if (fs.existsSync("pnpm-lock.yaml") || fs.existsSync("pnpm-lock.yml")) {
     return "pnpm";

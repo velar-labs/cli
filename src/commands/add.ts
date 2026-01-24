@@ -1,15 +1,36 @@
 #!/usr/bin/env node
 import { Command } from "commander";
 import prompts from "prompts";
-
-import { ComponentService } from "../services/ComponentService.js";
 import { RegistryService } from "../services/RegistryService.js";
-import { FileSystemService } from "../services/FileSystemService.js";
 import { ConfigManager } from "../config/ConfigManager.js";
+import { AddService } from "../services/AddService.js";
 import { ErrorHandler } from "../errors/ErrorHandler.js";
 import { logger } from "../utils/logger.js";
 
-export default function registerAddCommand(program: Command) {
+/**
+ * Prompt user to select components
+ * @param availableComponents - List of available component names
+ * @returns Selected component names or undefined if aborted
+ */
+async function promptComponentSelection(
+  availableComponents: readonly string[],
+): Promise<string[] | undefined> {
+  const res = await prompts({
+    type: "multiselect",
+    name: "selected",
+    message: "Select components to add",
+    choices: availableComponents.map((name) => ({ title: name, value: name })),
+    min: 1,
+  });
+
+  return res.selected as string[] | undefined;
+}
+
+/**
+ * Register the 'add' command with the CLI program
+ * @param program - Commander program instance
+ */
+export default function registerAddCommand(program: Command): void {
   program
     .command("add")
     .argument("[components...]", "Names of components to add")
@@ -18,85 +39,56 @@ export default function registerAddCommand(program: Command) {
       const errorHandler = new ErrorHandler();
 
       try {
-        // Initialize services
+        // 1. Initialize services
         const configManager = new ConfigManager();
         await configManager.load();
 
-        const fileSystem = new FileSystemService();
         const registryService = new RegistryService();
-        const componentService = new ComponentService(
-          registryService,
-          fileSystem,
-          configManager,
-        );
+        const addService = new AddService(registryService, configManager);
 
-        // Validate configuration
-        if (!configManager.validate()) {
+        // 2. Validate initialization
+        try {
+          addService.validateInitialization();
+        } catch {
           logger.error("Velar is not initialized");
           logger.step("Run velar init first");
           process.exit(1);
         }
 
-        // Load registry
-        const registry = await registryService.fetchRegistry();
+        // 3. Load registry
+        const registry = await addService.getAvailableComponents();
 
-        // If no components provided, prompt for selection
-        if (!components || components.length === 0) {
+        // 4. Prompt for components if none provided
+        let componentNames = components;
+        if (!componentNames || componentNames.length === 0) {
           const available = registry.components.map((c) => c.name);
-          const res = await prompts({
-            type: "multiselect",
-            name: "selected",
-            message: "Select components to add",
-            choices: available.map((c: string) => ({ title: c, value: c })),
-            min: 1,
-          });
+          const selected = await promptComponentSelection(available);
 
-          if (!res.selected || res.selected.length === 0) {
+          if (!selected || selected.length === 0) {
             logger.warning("No component selected");
             process.exit(0);
           }
-          components = res.selected as string[];
+          componentNames = selected;
         }
 
-        // Validate components exist
-        for (const component of components) {
-          if (!registry.components.find((c) => c.name === component)) {
-            logger.error(`Component "${component}" not found`);
-            logger.step("Run velar list to see available components");
-            process.exit(1);
-          }
+        // 5. Validate components exist
+        try {
+          addService.validateComponents(componentNames, registry);
+        } catch (err) {
+          logger.error((err as Error).message);
+          logger.step("Run velar list to see available components");
+          process.exit(1);
         }
 
-        // Add components
-        const result = await componentService.addComponents(components);
+        // 6. Add components
+        const result = await addService.addComponents(componentNames);
 
-        // Display results
-        result.added.forEach((name: string) => logger.success("Added " + name));
-        result.skipped.forEach((name: string) =>
-          logger.warning("Skipped " + name),
-        );
-        result.failed.forEach(
-          ({ name, error }: { name: string; error: string }) =>
-            logger.error("Failed to add " + name + ": " + error),
-        );
-
-        if (result.added.length > 0) {
-          console.log("\nNext steps:");
-          console.log("  Use <x-ui.COMPONENT> in your Blade views");
-
-          // Check if JS files were added
-          const jsFiles = result.added.filter((name: string) =>
-            name.endsWith(".js"),
-          );
-          if (jsFiles.length > 0) {
-            console.log("  Import JS files in your app.js:");
-            jsFiles.forEach((file: string) =>
-              console.log(`    import './components/${file.split("/")[1]}'`),
-            );
-          }
-        }
+        // 7. Display results
+        addService.displayResults(result);
+        addService.displayNextSteps(result);
       } catch (error) {
         errorHandler.handle(error as Error, "add command");
+        process.exit(1);
       }
     });
 }

@@ -1,6 +1,10 @@
 import { Command } from "commander";
 
-export default function registerListCommand(program: Command) {
+/**
+ * Register the 'list' command with the CLI program
+ * @param program - Commander program instance
+ */
+export default function registerListCommand(program: Command): void {
   program
     .command("list")
     .description("List available UI components from the registry")

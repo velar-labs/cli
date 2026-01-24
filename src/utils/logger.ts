@@ -1,26 +1,51 @@
 import chalk from "chalk";
+import logSymbols from "log-symbols";
 
+/**
+ * Logger utility for formatted console output
+ */
 export const logger = {
-  error: (message: string, details?: string) => {
-    console.error(chalk.red("✖"), message);
+  /**
+   * Log an error message
+   * @param message - Error message
+   * @param details - Optional details to display
+   */
+  error: (message: string, details?: string): void => {
+    console.error(chalk.red(logSymbols.error), message);
     if (details) {
       console.error(chalk.gray("→"), details);
     }
   },
 
-  success: (message: string) => {
-    console.log(chalk.green("✔"), message);
+  /**
+   * Log a success message
+   * @param message - Success message
+   */
+  success: (message: string): void => {
+    console.log(chalk.green(logSymbols.success), message);
   },
 
-  warning: (message: string) => {
-    console.log(chalk.yellow("⚠"), message);
+  /**
+   * Log a warning message
+   * @param message - Warning message
+   */
+  warning: (message: string): void => {
+    console.log(chalk.yellow(logSymbols.warning), message);
   },
 
-  info: (message: string) => {
-    console.log(chalk.blue("ℹ"), message);
+  /**
+   * Log an info message
+   * @param message - Info message
+   */
+  info: (message: string): void => {
+    console.log(chalk.blue(logSymbols.info), message);
   },
 
-  step: (message: string) => {
+  /**
+   * Log a step message
+   * @param message - Step message
+   */
+  step: (message: string): void => {
     console.log(chalk.cyan("→"), message);
   },
 };

@@ -1,20 +1,50 @@
-import type { AddResult } from "../types/index.js";
-import type { RegistryService } from "./RegistryService.js";
-import type { FileSystemService } from "./FileSystemService.js";
-import type { ConfigManager } from "../config/ConfigManager.js";
+import type {
+  AddResult,
+  VelarComponentMeta,
+  FailedComponent,
+} from "../types/index.js";
+import type { IRegistryService } from "../types/interfaces.js";
+import type { IFileSystemService } from "../types/interfaces.js";
+import type { IConfigManager } from "../types/interfaces.js";
 import prompts from "prompts";
 import path from "path";
 import { logger } from "../utils/logger.js";
+import { FileSystemService } from "./FileSystemService.js";
 
+/**
+ * Service for managing component operations
+ */
 export class ComponentService {
-  constructor(
-    private registryService: RegistryService,
-    private fileSystem: FileSystemService,
-    private configManager: ConfigManager,
-  ) {}
+  private readonly fileSystem: IFileSystemService;
 
-  async addComponents(componentNames: string[]): Promise<AddResult> {
-    const result: AddResult = {
+  /**
+   * Create a new ComponentService instance
+   * @param registryService - Service for registry operations
+   * @param fileSystem - Optional file system service (creates new one if not provided)
+   * @param configManager - Service for configuration management
+   */
+  constructor(
+    private readonly registryService: IRegistryService,
+    fileSystem?: IFileSystemService,
+    private readonly configManager?: IConfigManager,
+  ) {
+    this.fileSystem = fileSystem ?? new FileSystemService();
+    if (!this.configManager) {
+      throw new Error("ConfigManager is required");
+    }
+  }
+
+  /**
+   * Add multiple components to the project
+   * @param componentNames - Array of component names to add
+   * @returns Promise resolving to result of the operation
+   */
+  async addComponents(componentNames: readonly string[]): Promise<AddResult> {
+    const result: {
+      added: string[];
+      skipped: string[];
+      failed: FailedComponent[];
+    } = {
       added: [],
       skipped: [],
       failed: [],
@@ -37,8 +67,18 @@ export class ComponentService {
     return result;
   }
 
+  /**
+   * Add a single component to the project
+   * @param componentName - Name of the component to add
+   * @returns Promise resolving to result of the operation
+   * @throws Error if component fetch fails
+   */
   private async addComponent(componentName: string): Promise<AddResult> {
-    const result: AddResult = {
+    const result: {
+      added: string[];
+      skipped: string[];
+      failed: FailedComponent[];
+    } = {
       added: [],
       skipped: [],
       failed: [],
@@ -52,7 +92,7 @@ export class ComponentService {
       await this.registryService.resolveDependencies(component);
 
     // Get components path
-    const componentsPath = this.configManager.getComponentsPath();
+    const componentsPath = this.configManager!.getComponentsPath();
 
     for (const comp of componentsToAdd) {
       // Process all files (blade, js, css)
@@ -63,39 +103,15 @@ export class ComponentService {
         );
 
         // Determine destination based on file type
-        let dest: string;
-        switch (file.type) {
-          case "blade":
-            dest = path.join(componentsPath, `${comp.name}.blade.php`);
-            break;
-          case "js":
-            dest = path.join("resources/js/components", `${comp.name}.js`);
-            break;
-          case "css":
-            dest = path.join("resources/css/components", `${comp.name}.css`);
-            break;
-          default:
-            dest = path.join(componentsPath, file.path);
-        }
+        const dest = this.getDestinationPath(comp, file, componentsPath);
 
         // Check if file exists and handle conflict
         if (await this.fileSystem.fileExists(dest)) {
-          const res = await prompts({
-            type: "select",
-            name: "action",
-            message: `⚠ File "${file.path}" already exists.\nWhat do you want to do?`,
-            choices: [
-              { title: "Skip", value: "skip" },
-              { title: "Overwrite", value: "overwrite" },
-              { title: "Cancel", value: "cancel" },
-            ],
-            initial: 0,
-          });
-
-          if (res.action === "skip") {
+          const action = await this.handleFileConflict(file.path);
+          if (action === "skip") {
             result.skipped.push(`${comp.name}/${file.path}`);
             continue;
-          } else if (res.action === "cancel") {
+          } else if (action === "cancel") {
             logger.error("Cancelled.");
             process.exit(0);
           }
@@ -115,5 +131,52 @@ export class ComponentService {
     }
 
     return result;
+  }
+
+  /**
+   * Get the destination path for a component file
+   * @param component - Component metadata
+   * @param file - File metadata
+   * @param componentsPath - Base components path
+   * @returns Destination file path
+   */
+  private getDestinationPath(
+    component: VelarComponentMeta,
+    file: { type: string; path: string },
+    componentsPath: string,
+  ): string {
+    switch (file.type) {
+      case "blade":
+        return path.join(componentsPath, `${component.name}.blade.php`);
+      case "js":
+        return path.join("resources/js/components", `${component.name}.js`);
+      case "css":
+        return path.join("resources/css/components", `${component.name}.css`);
+      default:
+        return path.join(componentsPath, file.path);
+    }
+  }
+
+  /**
+   * Handle file conflict by prompting user
+   * @param filePath - Path of the conflicting file
+   * @returns Promise resolving to user action ("skip", "overwrite", or "cancel")
+   */
+  private async handleFileConflict(
+    filePath: string,
+  ): Promise<"skip" | "overwrite" | "cancel"> {
+    const res = await prompts({
+      type: "select",
+      name: "action",
+      message: `⚠ File "${filePath}" already exists.\nWhat do you want to do?`,
+      choices: [
+        { title: "Skip", value: "skip" },
+        { title: "Overwrite", value: "overwrite" },
+        { title: "Cancel", value: "cancel" },
+      ],
+      initial: 0,
+    });
+
+    return (res.action as "skip" | "overwrite" | "cancel") ?? "skip";
   }
 }

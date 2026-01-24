@@ -1,8 +1,12 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import type { VelarTheme } from "../types/index.js";
 
-export const THEMES = [
+/**
+ * Available Velar themes
+ */
+export const THEMES: readonly VelarTheme[] = [
   "neutral",
   "blue",
   "green",
@@ -11,12 +15,18 @@ export const THEMES = [
   "rose",
   "violet",
   "yellow",
-];
+] as const;
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REGISTRY_THEMES_DIR = path.resolve(__dirname, "../registry/themes");
 
-export function copyTheme(theme: string, target: string): void {
+/**
+ * Copy a theme CSS file to the target location
+ * @param theme - Theme name to copy
+ * @param target - Target file path
+ * @throws Error if theme doesn't exist or copy fails
+ */
+export function copyTheme(theme: VelarTheme, target: string): void {
   const source = path.join(REGISTRY_THEMES_DIR, `${theme}.css`);
   if (!fs.existsSync(source)) {
     throw new Error(`Theme "${theme}" not found in registry.`);

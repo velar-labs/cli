@@ -3,6 +3,9 @@ import registerInitCommand from "./commands/init.js";
 import registerAddCommand from "./commands/add.js";
 import registerListCommand from "./commands/list.js";
 
+/**
+ * Velar CLI program entry point
+ */
 const program = new Command();
 program
   .name("velar")

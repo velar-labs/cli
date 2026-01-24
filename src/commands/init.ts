@@ -1,202 +1,146 @@
 import { Command } from "commander";
 import prompts from "prompts";
-import { isLaravelProject } from "../utils/laravel.js";
-import { readPackageJson, detectTailwindV4 } from "../utils/tailwind.js";
-import {
-  hasAlpineJs,
-  hasLivewire,
-  hasInteractivitySupport,
-} from "../utils/requirements.js";
-import { detectPackageManager } from "../utils/package-manager.js";
-import {
-  findMainCss,
-  hasTailwindImport,
-  injectVelarImport,
-} from "../utils/css.js";
-import { THEMES, copyTheme } from "../utils/theme.js";
-import { writeVelarConfig } from "../utils/config.js";
-import fs from "fs";
 import { logger } from "../utils/logger.js";
 import { FileSystemService } from "../services/FileSystemService.js";
+import { InitService } from "../services/InitService.js";
+import { THEMES } from "../utils/theme.js";
+import type { PackageManager, VelarTheme } from "../types/index.js";
 
-export default function registerInitCommand(program: Command) {
+/**
+ * Prompt user to select package manager
+ * @param detectedPm - Detected package manager
+ * @returns Selected package manager or undefined if aborted
+ */
+async function promptPackageManager(
+  detectedPm: PackageManager,
+): Promise<PackageManager | undefined> {
+  const packageManagerPrompt = await prompts({
+    type: "select",
+    name: "packageManager",
+    message: "Which package manager are you using?",
+    choices: [
+      { title: "npm", value: "npm" },
+      { title: "yarn", value: "yarn" },
+      { title: "pnpm", value: "pnpm" },
+      { title: "bun", value: "bun" },
+    ],
+    initial: ["npm", "yarn", "pnpm", "bun"].indexOf(detectedPm),
+  });
+
+  return packageManagerPrompt.packageManager as PackageManager | undefined;
+}
+
+/**
+ * Prompt user to select theme
+ * @returns Selected theme or undefined if aborted
+ */
+async function promptTheme(): Promise<VelarTheme | undefined> {
+  const themePrompt = await prompts({
+    type: "select",
+    name: "theme",
+    message: "Choose a base color theme",
+    choices: THEMES.map((t) => ({
+      title: t.charAt(0).toUpperCase() + t.slice(1),
+      value: t,
+    })),
+    initial: 0,
+  });
+
+  return themePrompt.theme as VelarTheme | undefined;
+}
+
+/**
+ * Prompt user to confirm style import
+ * @returns True if user wants to import styles
+ */
+async function promptStyleImport(): Promise<boolean> {
+  const res = await prompts({
+    type: "confirm",
+    name: "import",
+    message: "Import Velar styles into your main CSS file?",
+    initial: true,
+  });
+
+  return Boolean(res.import);
+}
+
+/**
+ * Register the 'init' command with the CLI program
+ * @param program - Commander program instance
+ */
+export default function registerInitCommand(program: Command): void {
   program
     .command("init")
     .description("Initialize Velar in a Laravel project")
     .action(async () => {
       const fileSystem = new FileSystemService();
-      // 1. Laravel detection
-      if (!isLaravelProject()) {
-        logger.error("No Laravel project detected");
-        logger.step("Run velar init at the root of a Laravel project");
-        process.exit(1);
-      }
+      const initService = new InitService(fileSystem);
 
-      // 2. Interactivity detection (Alpine.js/Livewire)
-      const hasAlpine = hasAlpineJs();
-      const hasLivewireSupport = hasLivewire();
-      const detectedPm = detectPackageManager();
+      try {
+        // 1. Validate environment
+        const validation = initService.validateEnvironment();
+        initService.displayEnvironmentInfo(validation);
 
-      if (!hasInteractivitySupport()) {
-        logger.warning("No interactivity framework detected");
-        logger.step("Velar components work best with Alpine.js or Livewire");
-        logger.step(`Install Alpine.js: ${detectedPm} install alpinejs`);
-        logger.step("Or install Livewire: composer require livewire/livewire");
-      } else if (hasAlpine) {
-        logger.success(
-          "Alpine.js detected - components will be fully interactive",
+        // 2. Prompt for package manager
+        const packageManager = await promptPackageManager(
+          validation.detectedPackageManager,
         );
-      } else if (hasLivewireSupport) {
-        logger.success(
-          "Livewire detected - components will work with Livewire",
-        );
-      }
-
-      // 3. Tailwind v4 detection
-      const pkg = readPackageJson();
-      if (!pkg || !detectTailwindV4(pkg)) {
-        logger.error("Tailwind CSS v4 was not detected");
-        logger.step("Velar requires Tailwind CSS v4+");
-        process.exit(1);
-      }
-
-      // 4. Find main CSS
-      const css = findMainCss();
-      const hasCss = Boolean(css);
-      const canInject = css ? hasTailwindImport(css.content) : false;
-
-      if (!hasCss) {
-        logger.warning("No main CSS file found");
-        logger.step("Styles will be created but not auto-imported");
-      } else if (!canInject) {
-        logger.warning("Tailwind import not found in CSS");
-        logger.step("Velar styles will not be auto-imported");
-      }
-
-      // 5. Choose package manager
-      const packageManagerPrompt = await prompts({
-        type: "select",
-        name: "packageManager",
-        message: "Which package manager are you using?",
-        choices: [
-          { title: "npm", value: "npm" },
-          { title: "yarn", value: "yarn" },
-          { title: "pnpm", value: "pnpm" },
-          { title: "bun", value: "bun" },
-        ],
-        initial:
-          ["npm", "yarn", "pnpm", "bun"].indexOf(detectedPm) >= 0
-            ? ["npm", "yarn", "pnpm", "bun"].indexOf(detectedPm)
-            : 0,
-      });
-
-      const packageManager = packageManagerPrompt.packageManager;
-      if (!packageManager) {
-        logger.error("Package manager selection aborted");
-        process.exit(1);
-      }
-
-      // 6. Choose theme
-      const themePrompt = await prompts({
-        type: "select",
-        name: "theme",
-        message: "Choose a base color theme",
-        choices: THEMES.map((t) => ({
-          title: t.charAt(0).toUpperCase() + t.slice(1),
-          value: t,
-        })),
-        initial: 0,
-      });
-
-      const theme = themePrompt.theme;
-      if (!theme) {
-        logger.error("Theme selection aborted");
-        process.exit(1);
-      }
-
-      // 7. Create UI directory
-      const uiDir = "resources/views/components/ui";
-      await fileSystem.ensureDir(uiDir);
-
-      // 8. Create velar.css from theme
-      const velarCssPath = "resources/css/velar.css";
-      await fileSystem.ensureDir(
-        velarCssPath.split("/").slice(0, -1).join("/"),
-      );
-
-      if (!hasCss || !css) {
-        // fallback: always create if not present
-        try {
-          copyTheme(theme, velarCssPath);
-          logger.success("Velar theme created");
-          logger.info("resources/css/velar.css");
-        } catch (e) {
-          logger.error((e as Error).message);
+        if (!packageManager) {
+          logger.error("Package manager selection aborted");
           process.exit(1);
         }
-      } else if (!fs.existsSync(velarCssPath)) {
-        try {
-          copyTheme(theme, velarCssPath);
-          logger.success("Velar theme created");
-          logger.info("resources/css/velar.css");
-        } catch (e) {
-          logger.error((e as Error).message);
+
+        // 3. Prompt for theme
+        const theme = await promptTheme();
+        if (!theme) {
+          logger.error("Theme selection aborted");
           process.exit(1);
         }
-      } else {
-        logger.info("velar.css already exists");
-      }
 
-      // 8. Inject import if possible
-      let importDone = false;
-      if (hasCss && canInject) {
-        const res = await prompts({
-          type: "confirm",
-          name: "import",
-          message: "Import Velar styles into your main CSS file?",
-          initial: true,
-        });
+        // 4. Create directories and files
+        await initService.createComponentsDirectory();
+        await initService.createThemeFile(theme);
 
-        if (res.import) {
-          injectVelarImport(css!.path);
-          importDone = true;
-          logger.success("Velar styles imported");
-          logger.info(css!.path);
+        // 5. Handle style import
+        let stylesImported = false;
+        if (validation.cssFile && validation.canInjectCss) {
+          const shouldImport = await promptStyleImport();
+          if (shouldImport) {
+            await initService.injectStylesImport(validation.cssFile.path);
+            stylesImported = true;
+          }
         }
+
+        // 6. Generate configuration
+        await initService.generateConfig(
+          {
+            packageManager,
+            theme,
+            importStyles: stylesImported,
+          },
+          validation,
+        );
+
+        // 7. Display summary
+        initService.displaySummary(
+          {
+            packageManager,
+            theme,
+            importStyles: stylesImported,
+          },
+          validation,
+          stylesImported,
+        );
+      } catch (error) {
+        logger.error((error as Error).message);
+        if (error instanceof Error) {
+          if (error.message.includes("Laravel project")) {
+            logger.step("Run velar init at the root of a Laravel project");
+          } else if (error.message.includes("Tailwind")) {
+            logger.step("Velar requires Tailwind CSS v4+");
+          }
+        }
+        process.exit(1);
       }
-
-      // 9. Generate velar.json config
-      const config = {
-        version: "0.1",
-        theme,
-        packageManager,
-        css: {
-          entry: hasCss ? css!.path : "",
-          velar: "resources/css/velar.css",
-        },
-        components: {
-          path: "resources/views/components/ui",
-        },
-      };
-      writeVelarConfig(config);
-      logger.success("velar.json config generated");
-
-      // 10. Summary
-      console.log("\n---");
-      logger.success("Laravel project detected");
-      logger.success("Tailwind CSS v4 detected");
-      logger.success(`Theme selected: ${theme}`);
-      logger.success(`Package manager: ${packageManager}`);
-      logger.success("UI components directory ready");
-      logger.success(
-        importDone ? "Styles import complete" : "Styles import pending",
-      );
-      logger.success("velar.json created");
-      console.log("\nNext steps:");
-      console.log("  velar add button");
-      // Suggest tweakcn.com for advanced color customization (at the end)
-      console.log(
-        "\n💡 Want to customize your Tailwind palette? Try https://tweakcn.com/ — a visual generator for Tailwind-compatible color scales.",
-      );
     });
 }
