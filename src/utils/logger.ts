@@ -1,51 +1,22 @@
-import chalk from "chalk";
-import logSymbols from "log-symbols";
+import { highlighter } from "@/src/utils/highlighter";
 
-/**
- * Logger utility for formatted console output
- */
 export const logger = {
-  /**
-   * Log an error message
-   * @param message - Error message
-   * @param details - Optional details to display
-   */
-  error: (message: string, details?: string): void => {
-    console.error(chalk.red(logSymbols.error), message);
-    if (details) {
-      console.error(chalk.gray("→"), details);
-    }
+  error(...args: unknown[]) {
+    console.log(highlighter.error(args.join(" ")));
   },
-
-  /**
-   * Log a success message
-   * @param message - Success message
-   */
-  success: (message: string): void => {
-    console.log(chalk.green(logSymbols.success), message);
+  warn(...args: unknown[]) {
+    console.log(highlighter.warn(args.join(" ")));
   },
-
-  /**
-   * Log a warning message
-   * @param message - Warning message
-   */
-  warning: (message: string): void => {
-    console.log(chalk.yellow(logSymbols.warning), message);
+  info(...args: unknown[]) {
+    console.log(highlighter.info(args.join(" ")));
   },
-
-  /**
-   * Log an info message
-   * @param message - Info message
-   */
-  info: (message: string): void => {
-    console.log(chalk.blue(logSymbols.info), message);
+  success(...args: unknown[]) {
+    console.log(highlighter.success(args.join(" ")));
   },
-
-  /**
-   * Log a step message
-   * @param message - Step message
-   */
-  step: (message: string): void => {
-    console.log(chalk.cyan("→"), message);
+  log(...args: unknown[]) {
+    console.log(args.join(" "));
+  },
+  break() {
+    console.log("");
   },
 };

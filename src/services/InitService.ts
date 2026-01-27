@@ -114,12 +114,12 @@ export class InitService {
   displayEnvironmentInfo(validation: EnvironmentValidation): void {
     // Display interactivity framework status
     if (!hasInteractivitySupport()) {
-      logger.warning("No interactivity framework detected");
-      logger.step("Velar components work best with Alpine.js or Livewire");
-      logger.step(
+      logger.warn("No interactivity framework detected");
+      logger.log("Velar components work best with Alpine.js or Livewire");
+      logger.log(
         `Install Alpine.js: ${validation.detectedPackageManager} install alpinejs`,
       );
-      logger.step("Or install Livewire: composer require livewire/livewire");
+      logger.log("Or install Livewire: composer require livewire/livewire");
     } else if (validation.hasAlpine) {
       logger.success(
         "Alpine.js detected - components will be fully interactive",
@@ -130,17 +130,17 @@ export class InitService {
 
     // Display CSS file status
     if (!validation.cssFile) {
-      logger.warning("No main CSS file found");
-      logger.step("Styles will be created but not auto-imported");
+      logger.warn("No main CSS file found");
+      logger.log("Styles will be created but not auto-imported");
     } else if (!validation.canInjectCss) {
-      logger.warning("Tailwind import not found in CSS");
-      logger.step("Velar styles will not be auto-imported");
+      logger.warn("Tailwind import not found in CSS");
+      logger.log("Velar styles will not be auto-imported");
     }
 
     // Display JS file status
     if (!validation.jsFile) {
-      logger.warning("No main JS file found");
-      logger.step("Component scripts will not be auto-imported");
+      logger.warn("No main JS file found");
+      logger.log("Component scripts will not be auto-imported");
     }
   }
 

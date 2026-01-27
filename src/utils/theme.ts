@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import type { VelarTheme } from "../types/index.js";
+import type { VelarTheme } from "@/src/types";
 
 /**
  * Available Velar themes

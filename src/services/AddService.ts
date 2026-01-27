@@ -85,7 +85,7 @@ export class AddService {
    */
   displayResults(result: AddResult): void {
     result.added.forEach((name) => logger.success(`Added ${name}`));
-    result.skipped.forEach((name) => logger.warning(`Skipped ${name}`));
+    result.skipped.forEach((name) => logger.warn(`Skipped ${name}`));
     result.failed.forEach(({ name, error }) =>
       logger.error(`Failed to add ${name}: ${error}`),
     );

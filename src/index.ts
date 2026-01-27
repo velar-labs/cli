@@ -1,8 +1,8 @@
 import chalk from "chalk";
 import { Command } from "commander";
-import registerInitCommand from "./commands/init.js";
-import registerAddCommand from "./commands/add.js";
-import registerListCommand from "./commands/list.js";
+import { init } from "@/src/commands/init";
+import { add } from "@/src/commands/add";
+import { search } from "@/src/commands/list";
 
 /**
  * Display a nice introduction banner
@@ -26,8 +26,9 @@ program
     displayIntro();
   });
 
-registerInitCommand(program);
-registerAddCommand(program);
-registerListCommand(program);
+program
+  .addCommand(add)
+  .addCommand(init)
+  .addCommand(search);
 
 program.parse(process.argv);

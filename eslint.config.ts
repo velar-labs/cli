@@ -10,17 +10,11 @@ export default defineConfig(
     {
       files: ["**/*.{js,mjs,cjs,ts,mts,cts}"],
       plugins: { js },
-      extends: ["js/recommended"],
+      extends: ["js/recommended", "turbo", "prettier"],
       languageOptions: { globals: globals.browser },
     },
     tseslint.configs.recommended,
     globalIgnores(["node_modules/**", "dist/**", "src/__tests__"]),
-    // {
-    //   files: ["**/*.json"],
-    //   plugins: { json },
-    //   language: "json/json",
-    //   extends: ["json/recommended"],
-    // },
     {
       files: ["**/*.jsonc"],
       plugins: { json },

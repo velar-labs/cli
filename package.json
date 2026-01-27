@@ -1,7 +1,14 @@
 {
-  "name": "Velar",
+  "name": "velar-ui",
   "version": "0.1.0",
   "description": "CLI to add composable UI components to Laravel projects",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/velar-ui/cli.git"
+  },
   "keywords": [
     "laravel",
     "cli",
@@ -11,9 +18,7 @@
     "alpine"
   ],
   "type": "module",
-  "bin": {
-    "velar": "./dist/index.js"
-  },
+  "bin": "./dist/index.js",
   "files": [
     "dist"
   ],
@@ -21,10 +26,8 @@
     "node": ">=20"
   },
   "scripts": {
-    "dev": "tsc --watch & tsc-alias --watch & pnpm copy-themes:watch",
-    "build": "tsc && tsc-alias && pnpm copy-themes",
-    "copy-themes": "cp -r src/registry/themes dist/registry/",
-    "copy-themes:watch": "while true; do pnpm copy-themes; sleep 2; done",
+    "dev": "tsup --watch",
+    "build": "tsup",
     "lint": "eslint .",
     "prepublishOnly": "pnpm run build",
     "format": "prettier --write .",
@@ -42,14 +45,20 @@
     "chalk": "^5.6.2",
     "cli-table3": "^0.6.5",
     "commander": "^14.0.2",
+    "fs-extra": "^11.3.3",
+    "kleur": "^4.1.5",
     "log-symbols": "^7.0.1",
     "ora": "^9.1.0",
-    "zod": "^4.3.5"
+    "prompts": "^2.4.2",
+    "zod": "^3.24.1",
+    "zod-to-json-schema": "^3.24.6"
   },
   "devDependencies": {
+    "@types/prompts": "^2.4.9",
     "@eslint/js": "^9.39.2",
     "@eslint/json": "^0.14.0",
     "@eslint/markdown": "^7.5.1",
+    "@types/fs-extra": "^11.0.4",
     "@types/node": "^25.0.9",
     "@vitest/coverage-v8": "^4.0.18",
     "eslint": "^9.39.2",
@@ -57,6 +66,7 @@
     "jiti": "^2.6.1",
     "prettier": "3.8.0",
     "tsc-alias": "^1.8.16",
+    "tsup": "^8.5.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.53.0",
     "vitest": "^4.0.18"
