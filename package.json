@@ -2,13 +2,16 @@
   "name": "velar-ui",
   "version": "1.0.0",
   "description": "CLI to add composable UI components to Laravel projects",
-  "publishConfig": {
-    "access": "public"
+  "author": "",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/velar-ui/cli.git"
-  },
+  "bin": "./dist/index.js",
+  "files": [
+    "dist"
+  ],
   "keywords": [
     "laravel",
     "cli",
@@ -17,40 +20,37 @@
     "tailwind",
     "alpine"
   ],
-  "type": "module",
-  "bin": "./dist/index.js",
-  "files": [
-    "dist"
-  ],
-  "engines": {
-    "node": ">=20"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/velar-ui/cli.git"
   },
-  "scripts": {
-    "dev": "tsup --watch",
-    "build": "tsup",
-    "start": "node dist/index.js",
-    "lint": "eslint .",
-    "prepublishOnly": "pnpm run build",
-    "format:write": "prettier --write \"**/*.{ts,tsx,mdx}\" --cache",
-    "format:check": "prettier --check \"**/*.{ts,tsx,mdx}\" --cache",
-    "release": "changeset version",
-    "pub:beta": "pnpm build && pnpm publish --no-git-checks --access public --tag beta",
-    "pub:next": "pnpm build && pnpm publish --no-git-checks --access public --tag next",
-    "pub:release": "pnpm build && pnpm publish --access public",
-    "check:ci": "pnpm run lint && pnpm run typecheck",
-    "typecheck": "tsc --noEmit",
-    "clean": "rimraf dist",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+  "publishConfig": {
+    "access": "public"
   },
-  "author": "",
-  "license": "MIT",
   "packageManager": "pnpm@10.28.1+sha512.7d7dbbca9e99447b7c3bf7a73286afaaf6be99251eb9498baefa7d406892f67b879adb3a1d7e687fc4ccc1a388c7175fbaae567a26ab44d1067b54fcb0d6a316",
   "pnpm": {
     "overrides": {
       "cli-spinners": "2.9.2"
     }
+  },
+  "scripts": {
+    "build": "tsup",
+    "check:ci": "pnpm run lint && pnpm run typecheck",
+    "clean": "rimraf dist",
+    "dev": "tsup --watch",
+    "format:check": "prettier --check \"**/*.{ts,tsx,mdx}\" --cache",
+    "format:write": "prettier --write \"**/*.{ts,tsx,mdx}\" --cache",
+    "lint": "eslint .",
+    "prepublishOnly": "pnpm run build",
+    "pub:beta": "pnpm build && pnpm publish --no-git-checks --access public --tag beta",
+    "pub:next": "pnpm build && pnpm publish --no-git-checks --access public --tag next",
+    "pub:release": "pnpm build && pnpm publish --access public",
+    "release": "changeset version",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@clack/prompts": "^0.11.0",
