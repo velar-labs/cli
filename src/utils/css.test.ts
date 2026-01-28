@@ -32,7 +32,7 @@ describe("css utils", () => {
 
   describe("findMainCss", () => {
     it("should return first existing CSS file", () => {
-      mockFs.existsSync.mockImplementation((path: string) => {
+      mockFs.existsSync.mockImplementation((path) => {
         return path === "resources/css/app.scss";
       });
       mockFs.readFileSync.mockReturnValue("/* css content */");
@@ -54,7 +54,7 @@ describe("css utils", () => {
     });
 
     it("should check CSS candidates in order", () => {
-      mockFs.existsSync.mockImplementation((path: string) => {
+      mockFs.existsSync.mockImplementation((path) => {
         return path === "resources/css/style.css";
       });
       mockFs.readFileSync.mockReturnValue("content");
