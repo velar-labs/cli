@@ -1,98 +1,66 @@
 #!/usr/bin/env node
-import { ConfigManager } from "@/config/ConfigManager.js";
-import { ErrorHandler } from "@/errors/ErrorHandler.js";
-import { AddService } from "@/services/AddService.js";
-import { RegistryService } from "@/services/RegistryService.js";
-import { logger } from "@/utils/logger.js";
-import * as p from "@clack/prompts";
+import { ErrorHandler } from "@/src/errors/ErrorHandler";
+import { addComponents } from "@/src/utils/add-components";
 import { Command } from "commander";
+import { z } from "zod";
+import path from "path";
 
-/**
- * Prompt user to select components
- * @param availableComponents - List of available component names
- * @returns Selected component names or undefined if aborted
- */
-async function promptComponentSelection(
-  availableComponents: readonly string[],
-): Promise<string[] | undefined> {
-  const selected = await p.multiselect({
-    message: "Select components to add",
-    options: availableComponents.map((name) => ({ label: name, value: name })),
-    required: true,
-  });
-
-  if (p.isCancel(selected)) {
-    return undefined;
-  }
-
-  return selected as string[];
-}
+export const addOptionsSchema = z.object({
+  components: z.array(z.string()).optional(),
+  yes: z.boolean(),
+  overwrite: z.boolean(),
+  cwd: z.string(),
+  all: z.boolean(),
+  path: z.string().optional(),
+  silent: z.boolean(),
+  srcDir: z.boolean().optional(),
+  cssVariables: z.boolean().optional(),
+});
 
 /**
  * Register the 'add' command with the CLI program
  * @param program - Commander program instance
  */
-export default function registerAddCommand(program: Command): void {
-  program
-    .command("add")
-    .argument("[components...]", "Names of components to add")
-    .description("Add one or more UI components to your Laravel project")
-    .action(async (components?: string[]) => {
-      const errorHandler = new ErrorHandler();
+export const add = new Command()
+  .name("add")
+  .argument("[components...]", "Names of components to add")
+  .option("-y, --yes", "skip confirmation prompt.", false)
+  .option("-o, --overwrite", "overwrite existing files.", false)
+  .option(
+    "-c, --cwd <cwd>",
+    "the working directory. defaults to the current directory.",
+    process.cwd(),
+  )
+  .option("-a, --all", "add all available components", false)
+  .option("-p, --path <path>", "the path to add the component to.")
+  .option("-s, --silent", "mute output.", false)
+  .option(
+    "--src-dir",
+    "use the src directory when creating a new project.",
+    false,
+  )
+  .option(
+    "--no-src-dir",
+    "do not use the src directory when creating a new project.",
+  )
+  .option("--css-variables", "use CSS variables for theming.", true)
+  .option("--no-css-variables", "do not use CSS variables for theming.")
+  .description("Add one or more UI components to your Laravel project")
+  .action(async (components, opts) => {
+    const errorHandler = new ErrorHandler();
 
-      try {
-        // 1. Initialize services
-        const configManager = new ConfigManager();
-        await configManager.load();
+    try {
+      const rawOptions = {
+        components,
+        cwd: path.resolve(opts.cwd),
+        ...opts,
+        cssVariables: opts.cssVariables ?? true,
+      };
 
-        const registryService = new RegistryService();
-        const addService = new AddService(registryService, configManager);
-
-        // 2. Validate initialization
-        try {
-          addService.validateInitialization();
-        } catch {
-          logger.error("Velar is not initialized");
-          logger.step("Run velar init first");
-          process.exit(1);
-        }
-
-        // 3. Load registry (spinner handle inside addService/registryService)
-        const registry = await addService.getAvailableComponents();
-
-        // 4. Prompt for components if none provided
-        let componentNames = components;
-        if (!componentNames || componentNames.length === 0) {
-          const available = registry.components.map((c) => c.name);
-          const selected = await promptComponentSelection(
-            available.sort((a, b) => a.localeCompare(b)),
-          );
-
-          if (!selected || selected.length === 0) {
-            logger.warning("No component selected");
-            process.exit(0);
-          }
-          componentNames = selected;
-        }
-
-        // 5. Validate components exist
-        try {
-          addService.validateComponents(componentNames, registry);
-        } catch (err) {
-          logger.error((err as Error).message);
-          logger.step("Run velar list to see available components");
-          process.exit(1);
-        }
-
-        // 6. Add components
-        const result = await addService.addComponents(componentNames);
-
-        // 7. Display results
-        addService.displayResults(result);
-        addService.displayNextSteps(result);
-      } catch (error) {
-        errorHandler.handle(error as Error, "add command");
-        process.exit(1);
-      }
-    });
-}
+      const options = addOptionsSchema.parse(rawOptions);
+      await addComponents(options);
+    } catch (error) {
+      errorHandler.handle(error as Error, "add command");
+      process.exit(1);
+    }
+  });

@@ -3,26 +3,27 @@ import type {
   PackageManager,
   VelarTheme,
   FileInfo,
-} from "../types/index.js";
-import type { IFileSystemService } from "../types/interfaces.js";
-import { isLaravelProject } from "../utils/laravel.js";
-import { readPackageJson, detectTailwindV4 } from "../utils/tailwind.js";
+} from "@/src/types";
+import type { IFileSystemService } from "../types/interfaces";
+import { isLaravelProject } from "../utils/laravel";
+import { readPackageJson, detectTailwindV4 } from "../utils/tailwind";
 import {
   hasAlpineJs,
   hasLivewire,
   hasInteractivitySupport,
-} from "../utils/requirements.js";
-import { detectPackageManager } from "../utils/package-manager.js";
+} from "../utils/requirements";
+import { detectPackageManager } from "../utils/package-manager";
 import {
   findMainCss,
   hasTailwindImport,
   injectVelarImport,
-} from "../utils/css.js";
-import { findMainJs } from "../utils/js.js";
-import { copyTheme } from "../utils/theme.js";
-import { writeVelarConfig } from "../utils/config.js";
+} from "../utils/css";
+import { findMainJs } from "../utils/js";
+import { copyTheme } from "../utils/theme";
+import { writeVelarConfig } from "../utils/config";
 import fs from "fs";
-import { logger } from "../utils/logger.js";
+import { logger } from "../utils/logger";
+import packageJson from "../../package.json";
 
 /**
  * Environment validation result
@@ -114,12 +115,12 @@ export class InitService {
   displayEnvironmentInfo(validation: EnvironmentValidation): void {
     // Display interactivity framework status
     if (!hasInteractivitySupport()) {
-      logger.warning("No interactivity framework detected");
-      logger.step("Velar components work best with Alpine.js or Livewire");
-      logger.step(
+      logger.warn("No interactivity framework detected");
+      logger.log("Velar components work best with Alpine.js or Livewire");
+      logger.log(
         `Install Alpine.js: ${validation.detectedPackageManager} install alpinejs`,
       );
-      logger.step("Or install Livewire: composer require livewire/livewire");
+      logger.log("Or install Livewire: composer require livewire/livewire");
     } else if (validation.hasAlpine) {
       logger.success(
         "Alpine.js detected - components will be fully interactive",
@@ -130,17 +131,17 @@ export class InitService {
 
     // Display CSS file status
     if (!validation.cssFile) {
-      logger.warning("No main CSS file found");
-      logger.step("Styles will be created but not auto-imported");
+      logger.warn("No main CSS file found");
+      logger.log("Styles will be created but not auto-imported");
     } else if (!validation.canInjectCss) {
-      logger.warning("Tailwind import not found in CSS");
-      logger.step("Velar styles will not be auto-imported");
+      logger.warn("Tailwind import not found in CSS");
+      logger.log("Velar styles will not be auto-imported");
     }
 
     // Display JS file status
     if (!validation.jsFile) {
-      logger.warning("No main JS file found");
-      logger.step("Component scripts will not be auto-imported");
+      logger.warn("No main JS file found");
+      logger.log("Component scripts will not be auto-imported");
     }
   }
 
@@ -208,7 +209,7 @@ export class InitService {
     validation: EnvironmentValidation,
   ): Promise<void> {
     const config: VelarConfig = {
-      version: "0.1",
+      version: packageJson.version as string,
       theme: options.theme,
       packageManager: options.packageManager,
       css: {

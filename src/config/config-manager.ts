@@ -1,11 +1,8 @@
-import type {
-  VelarConfig,
-  PackageManager,
-  VelarTheme,
-} from "../types/index.js";
-import type { IConfigManager } from "../types/interfaces.js";
-import { readVelarConfig } from "../utils/config.js";
-import { logger } from "../utils/logger.js";
+import type { VelarConfig, PackageManager, VelarTheme } from "@/src/types";
+import type { IConfigManager } from "@/src/types/interfaces";
+import { readVelarConfig } from "@/src/utils/config";
+import { logger } from "@/src/utils/logger";
+import { handleError } from "@/src/utils/handle-error";
 
 /**
  * Manages Velar configuration loading and access
@@ -22,12 +19,15 @@ export class ConfigManager implements IConfigManager {
     try {
       this.config = readVelarConfig();
       if (!this.config) {
-        throw new Error("Configuration not found");
+        logger.error("");
+        handleError(new Error("Configuration not found"));
+        process.exit(1);
       }
       return this.config;
-    } catch (error) {
-      logger.error("Failed to load configuration", (error as Error).message);
-      throw error;
+    } catch {
+      logger.error("");
+      handleError(new Error("Something went wrong. Please try again."));
+      process.exit(1);
     }
   }
 

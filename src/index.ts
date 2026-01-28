@@ -1,15 +1,16 @@
 import chalk from "chalk";
 import { Command } from "commander";
-import registerInitCommand from "./commands/init.js";
-import registerAddCommand from "./commands/add.js";
-import registerListCommand from "./commands/list.js";
+import { init } from "@/src/commands/init";
+import { add } from "@/src/commands/add";
+import { list } from "@/src/commands/list";
 
+import packageJson from "../package.json";
 /**
  * Display a nice introduction banner
  */
 function displayIntro(): void {
   console.log("");
-  console.log(chalk.bold.cyan("  ▼ VELAR CLI v0.1.0"));
+  console.log(chalk.bold.cyan(`  ▼ VELAR CLI v${packageJson.version}`));
   console.log(chalk.gray("  Tailwind CSS v4+ components for Laravel"));
   console.log("");
 }
@@ -21,13 +22,15 @@ const program = new Command();
 program
   .name("velar")
   .description("Velar CLI: Copy UI components into your Laravel project")
-  .version("0.1.0")
+  .version(
+    packageJson.version || "1.0.0",
+    "-v, --version",
+    "display the version number",
+  )
   .hook("preAction", () => {
     displayIntro();
   });
 
-registerInitCommand(program);
-registerAddCommand(program);
-registerListCommand(program);
+program.addCommand(add).addCommand(init).addCommand(list);
 
 program.parse(process.argv);

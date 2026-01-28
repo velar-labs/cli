@@ -1,9 +1,9 @@
-import type { AddResult, RegistryData } from "../types/index.js";
-import type { IRegistryService } from "../types/interfaces.js";
-import type { IConfigManager } from "../types/interfaces.js";
-import { ComponentService } from "./ComponentService.js";
-import { FileSystemService } from "./FileSystemService.js";
-import { logger } from "../utils/logger.js";
+import type { AddResult, RegistryData } from "@/src/types";
+import type { IRegistryService } from "../types/interfaces";
+import type { IConfigManager } from "../types/interfaces";
+import { ComponentService } from "./component-service";
+import { FilesystemService } from "./filesystem-service";
+import { logger } from "../utils/logger";
 
 /**
  * Service for handling component addition operations
@@ -28,7 +28,7 @@ export class AddService {
       componentService ??
       new ComponentService(
         registryService,
-        new FileSystemService(),
+        new FilesystemService(),
         configManager,
       );
   }
@@ -85,7 +85,7 @@ export class AddService {
    */
   displayResults(result: AddResult): void {
     result.added.forEach((name) => logger.success(`Added ${name}`));
-    result.skipped.forEach((name) => logger.warning(`Skipped ${name}`));
+    result.skipped.forEach((name) => logger.warn(`Skipped ${name}`));
     result.failed.forEach(({ name, error }) =>
       logger.error(`Failed to add ${name}: ${error}`),
     );
@@ -100,12 +100,12 @@ export class AddService {
       return;
     }
 
-    console.log("\nNext steps:");
-    console.log("  Use <x-ui.COMPONENT> in your Blade views");
+    console.log("\n🎉 Happy coding! Enjoy building beautiful components!");
 
     // Check if JS files were added but not auto-imported
     const jsFiles = result.added.filter((name) => name.endsWith(".js"));
-    const hasJsEntry = this.configManager.validate() && this.configManager.getJsEntryPath();
+    const hasJsEntry =
+      this.configManager.validate() && this.configManager.getJsEntryPath();
 
     if (jsFiles.length > 0 && !hasJsEntry) {
       console.log("  Import JS files in your app.js:");

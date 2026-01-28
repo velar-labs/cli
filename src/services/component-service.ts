@@ -1,16 +1,34 @@
+import prompts from "prompts";
+import path from "path";
+import fsExtra from "fs-extra";
 import type {
   AddResult,
-  VelarComponentMeta,
   FailedComponent,
-} from "../types/index.js";
-import type { IRegistryService } from "../types/interfaces.js";
-import type { IFileSystemService } from "../types/interfaces.js";
-import type { IConfigManager } from "../types/interfaces.js";
-import * as p from "@clack/prompts";
-import path from "path";
-import { logger } from "../utils/logger.js";
-import { FileSystemService } from "./FileSystemService.js";
-import { injectComponentJs } from "../utils/js.js";
+  VelarComponentFile,
+  VelarComponentMeta,
+} from "@/src/types";
+import type {
+  IConfigManager,
+  IFileSystemService,
+  IRegistryService,
+} from "@/src/types/interfaces";
+import { FilesystemService } from "@/src/services/filesystem-service";
+import { injectComponentJs } from "@/src/utils/js";
+import { logger } from "@/src/utils/logger";
+import {
+  createFileBackup,
+  deleteFileBackup,
+  restoreFileBackup,
+} from "@/src/utils/file-helper";
+
+type PlannedFile = {
+  componentName: string;
+  filePath: string;
+  fileType: string;
+  destPath: string;
+  content: string;
+  existedBefore: boolean;
+};
 
 /**
  * Service for managing component operations
@@ -29,7 +47,7 @@ export class ComponentService {
     fileSystem?: IFileSystemService,
     private readonly configManager?: IConfigManager,
   ) {
-    this.fileSystem = fileSystem ?? new FileSystemService();
+    this.fileSystem = fileSystem ?? new FilesystemService();
     if (!this.configManager) {
       throw new Error("ConfigManager is required");
     }
@@ -95,19 +113,16 @@ export class ComponentService {
     // Get components path
     const componentsPath = this.configManager!.getComponentsPath();
 
-    for (const comp of componentsToAdd) {
-      // Process all files (blade, js, css)
-      for (const file of comp.files) {
-        const content = await this.registryService.fetchFile(
-          comp.name,
-          file.path,
-        );
+    const plannedFiles: PlannedFile[] = [];
 
+    for (const comp of componentsToAdd) {
+      for (const file of comp.files) {
         // Determine destination based on file type
         const dest = this.getDestinationPath(comp, file, componentsPath);
 
         // Check if file exists and handle conflict
-        if (await this.fileSystem.fileExists(dest)) {
+        const existedBefore = await this.fileSystem.fileExists(dest);
+        if (existedBefore) {
           const action = await this.handleFileConflict(file.path);
           if (action === "skip") {
             result.skipped.push(`${comp.name}/${file.path}`);
@@ -118,21 +133,44 @@ export class ComponentService {
           }
         }
 
-        // Write the file
-        try {
-          await this.fileSystem.writeFile(dest, content);
-          result.added.push(`${comp.name}/${file.path}`);
+        const content = await this.registryService.fetchFile(
+          comp.name,
+          file.path,
+        );
 
-          // Handle JS auto-import
-          if (file.type === "js") {
-            await this.autoImportJs(comp.name);
-          }
-        } catch (error) {
-          result.failed.push({
-            name: `${comp.name}/${file.path}`,
-            error: (error as Error).message,
-          });
+        plannedFiles.push({
+          componentName: comp.name,
+          filePath: file.path,
+          fileType: file.type,
+          destPath: dest,
+          content,
+          existedBefore,
+        });
+      }
+    }
+
+    if (plannedFiles.length > 0) {
+      try {
+        await this.applyFileBatch(plannedFiles);
+        plannedFiles.forEach((file) =>
+          result.added.push(`${file.componentName}/${file.filePath}`),
+        );
+
+        const jsComponents = new Set(
+          plannedFiles
+            .filter((file) => file.fileType === "js")
+            .map((file) => file.componentName),
+        );
+        for (const jsComponent of Array.from(jsComponents)) {
+          await this.autoImportJs(jsComponent);
         }
+      } catch (error) {
+        plannedFiles.forEach((file) =>
+          result.failed.push({
+            name: `${file.componentName}/${file.filePath}`,
+            error: (error as Error).message,
+          }),
+        );
       }
     }
 
@@ -154,7 +192,7 @@ export class ComponentService {
       injectComponentJs(jsEntry, componentName, importPath);
       logger.success(`Auto-imported ${componentName} into ${jsEntry}`);
     } catch (error) {
-      logger.warning(
+      logger.warn(
         `Failed to auto-import JS for ${componentName}: ${
           (error as Error).message
         }`,
@@ -171,7 +209,7 @@ export class ComponentService {
    */
   private getDestinationPath(
     component: VelarComponentMeta,
-    file: { type: string; path: string },
+    file: VelarComponentFile,
     componentsPath: string,
   ): string {
     switch (file.type) {
@@ -194,20 +232,75 @@ export class ComponentService {
   private async handleFileConflict(
     filePath: string,
   ): Promise<"skip" | "overwrite" | "cancel"> {
-    const action = await p.select({
-      message: `File "${filePath}" already exists. What do you want to do?`,
-      options: [
-        { label: "Skip", value: "skip" },
-        { label: "Overwrite", value: "overwrite" },
-        { label: "Cancel", value: "cancel" },
-      ],
-      initialValue: "skip",
-    });
-
-    if (p.isCancel(action)) {
-      return "cancel";
-    }
+    const { action } = await prompts(
+      {
+        type: "select",
+        name: "action",
+        message: `File "${filePath}" already exists. What do you want to do?`,
+        choices: [
+          { title: "Skip", value: "skip" },
+          { title: "Overwrite", value: "overwrite" },
+          { title: "Cancel", value: "cancel" },
+        ],
+        initial: 0,
+      },
+      {
+        onCancel: () => {
+          logger.error("Cancelled.");
+          process.exit(0);
+        },
+      },
+    );
 
     return action as "skip" | "overwrite" | "cancel";
+  }
+
+  private async applyFileBatch(plannedFiles: PlannedFile[]): Promise<void> {
+    const tempFiles: string[] = [];
+    const backupTargets: string[] = [];
+
+    try {
+      for (const file of plannedFiles) {
+        const tempPath = `${file.destPath}.velar-tmp`;
+        await this.fileSystem.writeFile(tempPath, file.content);
+        tempFiles.push(tempPath);
+      }
+
+      for (const file of plannedFiles) {
+        if (!file.existedBefore) {
+          continue;
+        }
+
+        const backupPath = createFileBackup(file.destPath);
+        if (!backupPath) {
+          throw new Error(`Failed to create backup for ${file.destPath}`);
+        }
+        backupTargets.push(file.destPath);
+      }
+
+      for (const file of plannedFiles) {
+        const tempPath = `${file.destPath}.velar-tmp`;
+        await fsExtra.move(tempPath, file.destPath, { overwrite: true });
+      }
+
+      backupTargets.forEach((filePath) => deleteFileBackup(filePath));
+    } catch (error) {
+      for (const file of plannedFiles) {
+        if (await this.fileSystem.fileExists(file.destPath)) {
+          await fsExtra.remove(file.destPath);
+        }
+        if (file.existedBefore) {
+          restoreFileBackup(file.destPath);
+        }
+      }
+
+      for (const tempFile of tempFiles) {
+        if (await this.fileSystem.fileExists(tempFile)) {
+          await fsExtra.remove(tempFile);
+        }
+      }
+
+      throw error;
+    }
   }
 }
