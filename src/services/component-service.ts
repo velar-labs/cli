@@ -13,6 +13,7 @@ import type {
   IRegistryService,
 } from "@/src/types/interfaces";
 import { FilesystemService } from "@/src/services/filesystem-service";
+import { DependencyService } from "@/src/services/dependency-service";
 import { injectComponentJs } from "@/src/utils/js";
 import { logger } from "@/src/utils/logger";
 import {
@@ -35,6 +36,7 @@ type PlannedFile = {
  */
 export class ComponentService {
   private readonly fileSystem: IFileSystemService;
+  private readonly dependencyService: DependencyService;
 
   /**
    * Create a new ComponentService instance
@@ -48,6 +50,7 @@ export class ComponentService {
     private readonly configManager?: IConfigManager,
   ) {
     this.fileSystem = fileSystem ?? new FilesystemService();
+    this.dependencyService = new DependencyService(this.fileSystem);
     if (!this.configManager) {
       throw new Error("ConfigManager is required");
     }
@@ -109,6 +112,23 @@ export class ComponentService {
     // Resolve dependencies
     const componentsToAdd =
       await this.registryService.resolveDependencies(component);
+
+    // Install component dependencies (npm/composer)
+    if (component.dependencies) {
+      const packageManager = this.configManager!.getPackageManager();
+      try {
+        await this.dependencyService.installDependencies(
+          component.dependencies,
+          packageManager,
+        );
+      } catch (error) {
+        logger.warn(
+          `Failed to install dependencies for ${componentName}: ${(error as Error).message
+          }`,
+        );
+        // Continue with file installation even if dependencies fail
+      }
+    }
 
     // Get components path
     const componentsPath = this.configManager!.getComponentsPath();
@@ -193,8 +213,7 @@ export class ComponentService {
       logger.success(`Auto-imported ${componentName} into ${jsEntry}`);
     } catch (error) {
       logger.warn(
-        `Failed to auto-import JS for ${componentName}: ${
-          (error as Error).message
+        `Failed to auto-import JS for ${componentName}: ${(error as Error).message
         }`,
       );
     }

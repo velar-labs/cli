@@ -1,6 +1,5 @@
 import type { AddResult, RegistryData } from "@/src/types";
-import type { IRegistryService } from "../types/interfaces";
-import type { IConfigManager } from "../types/interfaces";
+import type { IRegistryService , IConfigManager } from "../types/interfaces";
 import { ComponentService } from "./component-service";
 import { FilesystemService } from "./filesystem-service";
 import { logger } from "../utils/logger";

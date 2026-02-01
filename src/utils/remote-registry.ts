@@ -5,7 +5,7 @@ import type {
   GitHubFile,
   RegistryData,
   VelarComponentMeta,
-} from "../types/index";
+} from "../types";
 
 /**
  * HTTP service instance for making requests

@@ -2,7 +2,7 @@ import type {
   GitHubFile,
   RegistryData,
   VelarComponentMeta,
-} from "../types/index";
+} from "../types";
 import type { IRegistryService } from "../types/interfaces";
 import {
   fetchComponent,

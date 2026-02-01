@@ -1,5 +1,5 @@
 import { NetworkError } from "../errors/errors";
-import type { FetchOptions } from "../types/index";
+import type { FetchOptions } from "../types";
 
 /**
  * Default retry options

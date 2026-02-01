@@ -1,5 +1,5 @@
 import fs from "fs";
-import type { PackageManager } from "../types/index";
+import type { PackageManager } from "../types";
 
 /**
  * Detect the package manager used in the project
