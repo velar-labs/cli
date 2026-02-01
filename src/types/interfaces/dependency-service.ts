@@ -1,4 +1,4 @@
-import type { PackageManager, VelarDependency } from "..";
+import type { PackageManager, VelarDependency } from '..'
 
 /**
  * Interface for dependency installation operations
@@ -13,7 +13,7 @@ export interface IDependencyService {
   installDependencies(
     dependencies: VelarDependency,
     packageManager: PackageManager,
-  ): Promise<void>;
+  ): Promise<void>
 
   /**
    * Install npm/yarn/pnpm/bun dependencies
@@ -24,12 +24,12 @@ export interface IDependencyService {
   installNpmDependencies(
     dependencies: readonly string[],
     packageManager: PackageManager,
-  ): Promise<void>;
+  ): Promise<void>
 
   /**
    * Install composer dependencies
    * @param dependencies - Array of dependency strings (e.g., "livewire/livewire:^3.0")
    * @returns Promise that resolves when installation is complete
    */
-  installComposerDependencies(dependencies: readonly string[]): Promise<void>;
+  installComposerDependencies(dependencies: readonly string[]): Promise<void>
 }

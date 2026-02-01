@@ -1,14 +1,14 @@
-import type { VelarConfig, PackageManager, VelarTheme } from "@/src/types";
-import type { IConfigManager } from "@/src/types/interfaces";
-import { readVelarConfig } from "@/src/utils/config";
-import { logger } from "@/src/utils/logger";
-import { handleError } from "@/src/utils/handle-error";
+import type { VelarConfig, PackageManager, VelarTheme } from '@/src/types'
+import type { IConfigManager } from '@/src/types/interfaces'
+import { readVelarConfig } from '@/src/utils/config'
+import { logger } from '@/src/utils/logger'
+import { handleError } from '@/src/utils/handle-error'
 
 /**
  * Manages Velar configuration loading and access
  */
 export class ConfigManager implements IConfigManager {
-  private config?: VelarConfig;
+  private config?: VelarConfig
 
   /**
    * Load configuration from file
@@ -17,17 +17,17 @@ export class ConfigManager implements IConfigManager {
    */
   async load(): Promise<VelarConfig> {
     try {
-      this.config = readVelarConfig();
+      this.config = readVelarConfig()
       if (!this.config) {
-        logger.error("");
-        handleError(new Error("Configuration not found"));
-        process.exit(1);
+        logger.error('')
+        handleError(new Error('Configuration not found'))
+        process.exit(1)
       }
-      return this.config;
+      return this.config
     } catch {
-      logger.error("");
-      handleError(new Error("Something went wrong. Please try again."));
-      process.exit(1);
+      logger.error('')
+      handleError(new Error('Something went wrong. Please try again.'))
+      process.exit(1)
     }
   }
 
@@ -38,9 +38,9 @@ export class ConfigManager implements IConfigManager {
    */
   getPackageManager(): PackageManager {
     if (!this.config) {
-      throw new Error("Configuration not loaded");
+      throw new Error('Configuration not loaded')
     }
-    return (this.config.packageManager || "npm") as PackageManager;
+    return (this.config.packageManager || 'npm') as PackageManager
   }
 
   /**
@@ -48,7 +48,7 @@ export class ConfigManager implements IConfigManager {
    * @returns True if configuration is valid
    */
   validate(): boolean {
-    return !!this.config;
+    return !!this.config
   }
 
   /**
@@ -58,9 +58,9 @@ export class ConfigManager implements IConfigManager {
    */
   getComponentsPath(): string {
     if (!this.config) {
-      throw new Error("Configuration not loaded");
+      throw new Error('Configuration not loaded')
     }
-    return this.config.components.path;
+    return this.config.components.path
   }
 
   /**
@@ -70,9 +70,9 @@ export class ConfigManager implements IConfigManager {
    */
   getThemePath(): string {
     if (!this.config) {
-      throw new Error("Configuration not loaded");
+      throw new Error('Configuration not loaded')
     }
-    return this.config.css.velar;
+    return this.config.css.velar
   }
 
   /**
@@ -82,9 +82,9 @@ export class ConfigManager implements IConfigManager {
    */
   getJsEntryPath(): string {
     if (!this.config) {
-      throw new Error("Configuration not loaded");
+      throw new Error('Configuration not loaded')
     }
-    return this.config.js?.entry ?? "";
+    return this.config.js?.entry ?? ''
   }
 
   /**
@@ -94,8 +94,8 @@ export class ConfigManager implements IConfigManager {
    */
   getTheme(): VelarTheme {
     if (!this.config) {
-      throw new Error("Configuration not loaded");
+      throw new Error('Configuration not loaded')
     }
-    return this.config.theme as VelarTheme;
+    return this.config.theme as VelarTheme
   }
 }

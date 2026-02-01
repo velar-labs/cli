@@ -1,73 +1,73 @@
-import fs from "fs";
-import path from "path";
-import type { VelarTheme } from "@/src/types";
+import fs from 'fs'
+import path from 'path'
+import type { VelarTheme } from '@/src/types'
 
 type BaseColor = {
-  name: VelarTheme;
-  label: string;
+  name: VelarTheme
+  label: string
   cssVars: {
-    light: Record<string, string>;
-    dark: Record<string, string>;
-  };
-};
+    light: Record<string, string>
+    dark: Record<string, string>
+  }
+}
 
 function findColorsDir(startDir: string): string {
-  let current = startDir;
+  let current = startDir
   for (let depth = 0; depth < 4; depth += 1) {
-    const distPath = path.join(current, "colors");
+    const distPath = path.join(current, 'colors')
     if (fs.existsSync(distPath)) {
-      return distPath;
+      return distPath
     }
 
-    const srcPath = path.join(current, "src/colors");
+    const srcPath = path.join(current, 'src/colors')
     if (fs.existsSync(srcPath)) {
-      return srcPath;
+      return srcPath
     }
 
-    const parent = path.dirname(current);
+    const parent = path.dirname(current)
     if (parent === current) {
-      break;
+      break
     }
-    current = parent;
+    current = parent
   }
 
-  return path.join(startDir, "colors");
+  return path.join(startDir, 'colors')
 }
 
 const entryDir = process.argv[1]
   ? path.dirname(path.resolve(process.argv[1]))
-  : process.cwd();
-const COLORS_DIR = findColorsDir(entryDir);
+  : process.cwd()
+const COLORS_DIR = findColorsDir(entryDir)
 
 function loadBaseColors(): BaseColor[] {
   if (!fs.existsSync(COLORS_DIR)) {
-    return [];
+    return []
   }
 
   const files = fs
     .readdirSync(COLORS_DIR)
-    .filter((file) => file.endsWith(".json"));
+    .filter((file) => file.endsWith('.json'))
 
   return files
     .map((file) => {
-      const filePath = path.join(COLORS_DIR, file);
-      const raw = fs.readFileSync(filePath, "utf-8");
-      return JSON.parse(raw) as BaseColor;
+      const filePath = path.join(COLORS_DIR, file)
+      const raw = fs.readFileSync(filePath, 'utf-8')
+      return JSON.parse(raw) as BaseColor
     })
     .filter((color) => !!color?.name)
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .sort((a, b) => a.name.localeCompare(b.name))
 }
 
 export function getBaseColors(): BaseColor[] {
-  return loadBaseColors();
+  return loadBaseColors()
 }
 
 export function getBaseColor(name: VelarTheme): BaseColor | undefined {
-  return loadBaseColors().find((color) => color.name === name);
+  return loadBaseColors().find((color) => color.name === name)
 }
 
 function renderCssVars(vars: Record<string, string>): string[] {
-  return Object.entries(vars).map(([key, value]) => `  --${key}: ${value};`);
+  return Object.entries(vars).map(([key, value]) => `  --${key}: ${value};`)
 }
 
 /**
@@ -77,24 +77,24 @@ function renderCssVars(vars: Record<string, string>): string[] {
  * @throws Error if theme doesn't exist or copy fails
  */
 export function copyTheme(theme: VelarTheme, target: string): void {
-  const baseColor = getBaseColor(theme);
+  const baseColor = getBaseColor(theme)
   if (!baseColor) {
-    throw new Error(`Theme "${theme}" not found in colors registry.`);
+    throw new Error(`Theme "${theme}" not found in colors registry.`)
   }
 
-  const lightVars = renderCssVars(baseColor.cssVars.light);
-  const darkVars = renderCssVars(baseColor.cssVars.dark);
+  const lightVars = renderCssVars(baseColor.cssVars.light)
+  const darkVars = renderCssVars(baseColor.cssVars.dark)
 
   const content = [
-    ":root {",
+    ':root {',
     ...lightVars,
-    "}",
-    "",
-    ".dark {",
+    '}',
+    '',
+    '.dark {',
     ...darkVars,
-    "}",
-    "",
-  ].join("\n");
+    '}',
+    '',
+  ].join('\n')
 
-  fs.writeFileSync(target, content, { encoding: "utf-8", flag: "wx" });
+  fs.writeFileSync(target, content, { encoding: 'utf-8', flag: 'wx' })
 }

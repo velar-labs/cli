@@ -1,14 +1,14 @@
-import type { AddResult, RegistryData } from "@/src/types";
-import type { IRegistryService , IConfigManager } from "../types/interfaces";
-import { ComponentService } from "./component-service";
-import { FilesystemService } from "./filesystem-service";
-import { logger } from "../utils/logger";
+import type { AddResult, RegistryData } from '@/src/types'
+import type { IRegistryService, IConfigManager } from '../types/interfaces'
+import { ComponentService } from './component-service'
+import { FilesystemService } from './filesystem-service'
+import { logger } from '../utils/logger'
 
 /**
  * Service for handling component addition operations
  */
 export class AddService {
-  private readonly componentService: ComponentService;
+  private readonly componentService: ComponentService
 
   /**
    * Create a new AddService instance
@@ -29,7 +29,7 @@ export class AddService {
         registryService,
         new FilesystemService(),
         configManager,
-      );
+      )
   }
 
   /**
@@ -38,7 +38,7 @@ export class AddService {
    */
   validateInitialization(): void {
     if (!this.configManager.validate()) {
-      throw new Error("Velar is not initialized");
+      throw new Error('Velar is not initialized')
     }
   }
 
@@ -53,9 +53,9 @@ export class AddService {
     registry: RegistryData,
   ): void {
     for (const componentName of componentNames) {
-      const found = registry.components.find((c) => c.name === componentName);
+      const found = registry.components.find((c) => c.name === componentName)
       if (!found) {
-        throw new Error(`Component "${componentName}" not found`);
+        throw new Error(`Component "${componentName}" not found`)
       }
     }
   }
@@ -66,7 +66,7 @@ export class AddService {
    * @throws NetworkError if fetch fails
    */
   async getAvailableComponents(): Promise<RegistryData> {
-    return await this.registryService.fetchRegistry();
+    return await this.registryService.fetchRegistry()
   }
 
   /**
@@ -75,7 +75,7 @@ export class AddService {
    * @returns Promise resolving to result of the operation
    */
   async addComponents(componentNames: readonly string[]): Promise<AddResult> {
-    return await this.componentService.addComponents(componentNames);
+    return await this.componentService.addComponents(componentNames)
   }
 
   /**
@@ -83,11 +83,11 @@ export class AddService {
    * @param result - Result of the add operation
    */
   displayResults(result: AddResult): void {
-    result.added.forEach((name) => logger.success(`Added ${name}`));
-    result.skipped.forEach((name) => logger.warn(`Skipped ${name}`));
+    result.added.forEach((name) => logger.success(`Added ${name}`))
+    result.skipped.forEach((name) => logger.warn(`Skipped ${name}`))
     result.failed.forEach(({ name, error }) =>
       logger.error(`Failed to add ${name}: ${error}`),
-    );
+    )
   }
 
   /**
@@ -96,24 +96,24 @@ export class AddService {
    */
   displayNextSteps(result: AddResult): void {
     if (result.added.length === 0) {
-      return;
+      return
     }
 
-    console.log("\n🎉 Happy coding! Enjoy building beautiful components!");
+    console.log('\n🎉 Happy coding! Enjoy building beautiful components!')
 
     // Check if JS files were added but not auto-imported
-    const jsFiles = result.added.filter((name) => name.endsWith(".js"));
+    const jsFiles = result.added.filter((name) => name.endsWith('.js'))
     const hasJsEntry =
-      this.configManager.validate() && this.configManager.getJsEntryPath();
+      this.configManager.validate() && this.configManager.getJsEntryPath()
 
     if (jsFiles.length > 0 && !hasJsEntry) {
-      console.log("  Import JS files in your app.js:");
+      console.log('  Import JS files in your app.js:')
       jsFiles.forEach((file) => {
-        const fileName = file.split("/")[1];
+        const fileName = file.split('/')[1]
         if (fileName) {
-          console.log(`    import './ui/${fileName}'`);
+          console.log(`    import './ui/${fileName}'`)
         }
-      });
+      })
     }
   }
 }

@@ -1,7 +1,7 @@
-import js from "@eslint/js";
-import { defineConfig } from "eslint/config";
-import globals from "globals";
-import tseslint from "typescript-eslint";
+import js from '@eslint/js'
+import { defineConfig } from 'eslint/config'
+import globals from 'globals'
+import tseslint from 'typescript-eslint'
 
 export default defineConfig([
   js.configs.recommended,
@@ -15,11 +15,11 @@ export default defineConfig([
     },
   },
   {
-    ignores: ["node_modules/**", "dist/**", "src/__tests__/**", "coverage/**"],
+    ignores: ['node_modules/**', 'dist/**', 'src/__tests__/**', 'coverage/**'],
   },
   {
     rules: {
-      "@typescript-eslint/no-explicit-any": "off"
+      '@typescript-eslint/no-explicit-any': 'off',
     },
   },
-]);
+])

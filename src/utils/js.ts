@@ -1,14 +1,14 @@
-import fs from "fs";
-import type { FileInfo } from "@/src/types";
+import fs from 'fs'
+import type { FileInfo } from '@/src/types'
 
 /**
  * Common JS file paths to check for main script
  */
 export const JS_CANDIDATES = [
-  "resources/js/app.js",
-  "resources/js/main.js",
-  "resources/js/index.js",
-] as const;
+  'resources/js/app.js',
+  'resources/js/main.js',
+  'resources/js/index.js',
+] as const
 
 /**
  * Find the main JS file in the project
@@ -19,11 +19,11 @@ export function findMainJs(): FileInfo | null {
     if (fs.existsSync(rel)) {
       return {
         path: rel,
-        content: fs.readFileSync(rel, "utf8"),
-      };
+        content: fs.readFileSync(rel, 'utf8'),
+      }
     }
   }
-  return null;
+  return null
 }
 
 /**
@@ -38,31 +38,31 @@ export function injectComponentJs(
   componentName: string,
   componentImportPath: string,
 ): void {
-  let content = fs.readFileSync(jsPath, "utf8");
+  let content = fs.readFileSync(jsPath, 'utf8')
 
   // Avoid duplicate imports
-  const importStatement = `import ${componentName} from '${componentImportPath}'`;
+  const importStatement = `import ${componentName} from '${componentImportPath}'`
   if (
     content.includes(importStatement) ||
     content.includes(`import ${componentName} from "${componentImportPath}"`)
   ) {
-    return;
+    return
   }
 
   // Add import at the top (after other imports if possible)
-  const lines = content.split("\n");
-  let lastImportIndex = -1;
+  const lines = content.split('\n')
+  let lastImportIndex = -1
   for (let i = 0; i < lines.length; i++) {
-    if (lines[i]?.startsWith("import ")) {
-      lastImportIndex = i;
+    if (lines[i]?.startsWith('import ')) {
+      lastImportIndex = i
     }
   }
 
-  lines.splice(lastImportIndex + 1, 0, importStatement);
-  content = lines.join("\n");
+  lines.splice(lastImportIndex + 1, 0, importStatement)
+  content = lines.join('\n')
 
   // Handle Alpine.data registration
-  const alpineDataRegistration = `Alpine.data('${componentName}', ${componentName});`;
+  const alpineDataRegistration = `Alpine.data('${componentName}', ${componentName});`
 
   if (content.includes("document.addEventListener('alpine:init'")) {
     // Inject into existing listener
@@ -70,12 +70,12 @@ export function injectComponentJs(
       content = content.replace(
         /document\.addEventListener\('alpine:init',\s*\(\)\s*=>\s*\{/,
         (match) => `${match}\n    ${alpineDataRegistration}`,
-      );
+      )
     }
   } else {
     // Create new listener at the end
-    content += `\n\ndocument.addEventListener('alpine:init', () => {\n    ${alpineDataRegistration}\n});\n`;
+    content += `\n\ndocument.addEventListener('alpine:init', () => {\n    ${alpineDataRegistration}\n});\n`
   }
 
-  fs.writeFileSync(jsPath, content, "utf8");
+  fs.writeFileSync(jsPath, content, 'utf8')
 }

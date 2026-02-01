@@ -3,48 +3,44 @@ import type {
   PackageManager,
   VelarTheme,
   FileInfo,
-} from "@/src/types";
-import type { IFileSystemService } from "../types/interfaces";
-import { isLaravelProject } from "../utils/laravel";
-import { readPackageJson, detectTailwindV4 } from "../utils/tailwind";
+} from '@/src/types'
+import type { IFileSystemService } from '../types/interfaces'
+import { isLaravelProject } from '../utils/laravel'
+import { readPackageJson, detectTailwindV4 } from '../utils/tailwind'
 import {
   hasAlpineJs,
   hasLivewire,
   hasInteractivitySupport,
-} from "../utils/requirements";
-import { detectPackageManager } from "../utils/package-manager";
-import {
-  findMainCss,
-  hasTailwindImport,
-  injectVelarImport,
-} from "../utils/css";
-import { findMainJs } from "../utils/js";
-import { copyTheme } from "../utils/theme";
-import { writeVelarConfig } from "../utils/config";
-import fs from "fs";
-import { logger } from "../utils/logger";
-import packageJson from "../../package.json";
+} from '../utils/requirements'
+import { detectPackageManager } from '../utils/package-manager'
+import { findMainCss, hasTailwindImport, injectVelarImport } from '../utils/css'
+import { findMainJs } from '../utils/js'
+import { copyTheme } from '../utils/theme'
+import { writeVelarConfig } from '../utils/config'
+import fs from 'fs'
+import { logger } from '../utils/logger'
+import packageJson from '../../package.json'
 
 /**
  * Environment validation result
  */
 export interface EnvironmentValidation {
   /** Whether Laravel project is detected */
-  isLaravel: boolean;
+  isLaravel: boolean
   /** Whether Tailwind v4 is detected */
-  hasTailwindV4: boolean;
+  hasTailwindV4: boolean
   /** Whether Alpine.js is detected */
-  hasAlpine: boolean;
+  hasAlpine: boolean
   /** Whether Livewire is detected */
-  hasLivewire: boolean;
+  hasLivewire: boolean
   /** Detected package manager */
-  detectedPackageManager: PackageManager;
+  detectedPackageManager: PackageManager
   /** Main CSS file info if found */
-  cssFile: FileInfo | null;
+  cssFile: FileInfo | null
   /** Main JS file info if found */
-  jsFile: FileInfo | null;
+  jsFile: FileInfo | null
   /** Whether CSS can be injected */
-  canInjectCss: boolean;
+  canInjectCss: boolean
 }
 
 /**
@@ -52,11 +48,11 @@ export interface EnvironmentValidation {
  */
 export interface InitOptions {
   /** Selected package manager */
-  packageManager: PackageManager;
+  packageManager: PackageManager
   /** Selected theme */
-  theme: VelarTheme;
+  theme: VelarTheme
   /** Whether to import styles */
-  importStyles: boolean;
+  importStyles: boolean
 }
 
 /**
@@ -77,24 +73,24 @@ export class InitService {
   validateEnvironment(): EnvironmentValidation {
     // Validate Laravel project
     if (!isLaravelProject()) {
-      throw new Error("No Laravel project detected");
+      throw new Error('No Laravel project detected')
     }
 
     // Check Tailwind v4
-    const pkg = readPackageJson();
+    const pkg = readPackageJson()
     if (!pkg || !detectTailwindV4(pkg)) {
-      throw new Error("Tailwind CSS v4 was not detected");
+      throw new Error('Tailwind CSS v4 was not detected')
     }
 
     // Check interactivity frameworks
-    const hasAlpine = hasAlpineJs();
-    const hasLivewireSupport = hasLivewire();
-    const detectedPm = detectPackageManager();
+    const hasAlpine = hasAlpineJs()
+    const hasLivewireSupport = hasLivewire()
+    const detectedPm = detectPackageManager()
 
     // Find CSS and JS files
-    const css = findMainCss();
-    const js = findMainJs();
-    const canInject = css ? hasTailwindImport(css.content) : false;
+    const css = findMainCss()
+    const js = findMainJs()
+    const canInject = css ? hasTailwindImport(css.content) : false
 
     return {
       isLaravel: true,
@@ -105,7 +101,7 @@ export class InitService {
       cssFile: css,
       jsFile: js,
       canInjectCss: canInject,
-    };
+    }
   }
 
   /**
@@ -115,33 +111,33 @@ export class InitService {
   displayEnvironmentInfo(validation: EnvironmentValidation): void {
     // Display interactivity framework status
     if (!hasInteractivitySupport()) {
-      logger.warn("No interactivity framework detected");
-      logger.log("Velar components work best with Alpine.js or Livewire");
+      logger.warn('No interactivity framework detected')
+      logger.log('Velar components work best with Alpine.js or Livewire')
       logger.log(
         `Install Alpine.js: ${validation.detectedPackageManager} install alpinejs`,
-      );
-      logger.log("Or install Livewire: composer require livewire/livewire");
+      )
+      logger.log('Or install Livewire: composer require livewire/livewire')
     } else if (validation.hasAlpine) {
       logger.success(
-        "Alpine.js detected - components will be fully interactive",
-      );
+        'Alpine.js detected - components will be fully interactive',
+      )
     } else if (validation.hasLivewire) {
-      logger.success("Livewire detected - components will work with Livewire");
+      logger.success('Livewire detected - components will work with Livewire')
     }
 
     // Display CSS file status
     if (!validation.cssFile) {
-      logger.warn("No main CSS file found");
-      logger.log("Styles will be created but not auto-imported");
+      logger.warn('No main CSS file found')
+      logger.log('Styles will be created but not auto-imported')
     } else if (!validation.canInjectCss) {
-      logger.warn("Tailwind import not found in CSS");
-      logger.log("Velar styles will not be auto-imported");
+      logger.warn('Tailwind import not found in CSS')
+      logger.log('Velar styles will not be auto-imported')
     }
 
     // Display JS file status
     if (!validation.jsFile) {
-      logger.warn("No main JS file found");
-      logger.log("Component scripts will not be auto-imported");
+      logger.warn('No main JS file found')
+      logger.log('Component scripts will not be auto-imported')
     }
   }
 
@@ -151,9 +147,9 @@ export class InitService {
    * @returns Promise that resolves when directory is created
    */
   async createComponentsDirectory(
-    path = "resources/views/components/ui",
+    path = 'resources/views/components/ui',
   ): Promise<void> {
-    await this.fileSystem.ensureDir(path);
+    await this.fileSystem.ensureDir(path)
   }
 
   /**
@@ -165,25 +161,25 @@ export class InitService {
    */
   async createThemeFile(
     theme: VelarTheme,
-    targetPath = "resources/css/velar.css",
+    targetPath = 'resources/css/velar.css',
   ): Promise<void> {
     // Ensure directory exists
-    const dirPath = targetPath.split("/").slice(0, -1).join("/");
-    await this.fileSystem.ensureDir(dirPath);
+    const dirPath = targetPath.split('/').slice(0, -1).join('/')
+    await this.fileSystem.ensureDir(dirPath)
 
     // Create theme file if it doesn't exist
     if (!fs.existsSync(targetPath)) {
       try {
-        copyTheme(theme, targetPath);
-        logger.success("Velar theme created");
-        logger.info(targetPath);
+        copyTheme(theme, targetPath)
+        logger.success('Velar theme created')
+        logger.info(targetPath)
       } catch (error) {
         throw new Error(
           `Failed to create theme file: ${(error as Error).message}`,
-        );
+        )
       }
     } else {
-      logger.info("velar.css already exists");
+      logger.info('velar.css already exists')
     }
   }
 
@@ -193,9 +189,9 @@ export class InitService {
    * @returns Promise that resolves when import is injected
    */
   async injectStylesImport(cssPath: string): Promise<void> {
-    injectVelarImport(cssPath);
-    logger.success("Velar styles imported");
-    logger.info(cssPath);
+    injectVelarImport(cssPath)
+    logger.success('Velar styles imported')
+    logger.info(cssPath)
   }
 
   /**
@@ -213,19 +209,19 @@ export class InitService {
       theme: options.theme,
       packageManager: options.packageManager,
       css: {
-        entry: validation.cssFile?.path ?? "",
-        velar: "resources/css/velar.css",
+        entry: validation.cssFile?.path ?? '',
+        velar: 'resources/css/velar.css',
       },
       js: {
-        entry: validation.jsFile?.path ?? "",
+        entry: validation.jsFile?.path ?? '',
       },
       components: {
-        path: "resources/views/components/ui",
+        path: 'resources/views/components/ui',
       },
-    };
+    }
 
-    writeVelarConfig(config);
-    logger.success("velar.json config generated");
+    writeVelarConfig(config)
+    logger.success('velar.json config generated')
   }
 
   /**
@@ -239,23 +235,23 @@ export class InitService {
     validation: EnvironmentValidation,
     stylesImported: boolean,
   ): void {
-    console.log("\n---");
-    logger.success("Laravel project detected");
-    logger.success("Tailwind CSS v4 detected");
-    logger.success(`Theme selected: ${options.theme}`);
-    logger.success(`Package manager: ${options.packageManager}`);
-    logger.success("UI components directory ready");
+    console.log('\n---')
+    logger.success('Laravel project detected')
+    logger.success('Tailwind CSS v4 detected')
+    logger.success(`Theme selected: ${options.theme}`)
+    logger.success(`Package manager: ${options.packageManager}`)
+    logger.success('UI components directory ready')
     if (validation.jsFile) {
-      logger.success("Main JS file detected");
+      logger.success('Main JS file detected')
     }
     logger.success(
-      stylesImported ? "Styles import complete" : "Styles import pending",
-    );
-    logger.success("velar.json created");
-    console.log("\nNext steps:");
-    console.log("  velar add button");
+      stylesImported ? 'Styles import complete' : 'Styles import pending',
+    )
+    logger.success('velar.json created')
+    console.log('\nNext steps:')
+    console.log('  velar add button')
     console.log(
-      "\n💡 Want to customize your Tailwind palette? Try https://tweakcn.com/ — a visual generator for Tailwind-compatible color scales.",
-    );
+      '\n💡 Want to customize your Tailwind palette? Try https://tweakcn.com/ — a visual generator for Tailwind-compatible color scales.',
+    )
   }
 }

@@ -1,5 +1,5 @@
-import { NetworkError } from "../errors/errors";
-import type { FetchOptions } from "../types";
+import { NetworkError } from '../errors/errors'
+import type { FetchOptions } from '../types'
 
 /**
  * Default retry options
@@ -12,14 +12,14 @@ const DEFAULT_RETRY_OPTIONS: Required<FetchOptions> = {
   retryableStatusCodes: [408, 429, 500, 502, 503, 504],
   timeout: 30000,
   headers: {},
-};
+}
 
 /**
  * Sleep utility for retry delays
  * @param ms - Milliseconds to sleep
  */
 function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 /**
@@ -36,8 +36,8 @@ function calculateDelay(
   backoffFactor: number,
   maxDelay: number,
 ): number {
-  const delay = initialDelay * Math.pow(backoffFactor, attempt);
-  return Math.min(delay, maxDelay);
+  const delay = initialDelay * Math.pow(backoffFactor, attempt)
+  return Math.min(delay, maxDelay)
 }
 
 /**
@@ -50,7 +50,7 @@ function isRetryableStatus(
   status: number,
   retryableStatusCodes: readonly number[],
 ): boolean {
-  return retryableStatusCodes.includes(status);
+  return retryableStatusCodes.includes(status)
 }
 
 /**
@@ -63,30 +63,30 @@ async function fetchWithTimeout(
   url: string,
   options: FetchOptions,
 ): Promise<Response> {
-  const { timeout = DEFAULT_RETRY_OPTIONS.timeout, headers = {} } = options;
+  const { timeout = DEFAULT_RETRY_OPTIONS.timeout, headers = {} } = options
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), timeout)
 
   try {
     const response = await fetch(url, {
       signal: controller.signal,
       headers: {
-        "User-Agent": "Velar-CLI",
+        'User-Agent': 'Velar-CLI',
         ...headers,
       },
-    });
-    return response;
+    })
+    return response
   } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") {
+    if (error instanceof Error && error.name === 'AbortError') {
       throw new NetworkError(
         `Request timeout after ${timeout}ms for ${url}`,
         error,
-      );
+      )
     }
-    throw error;
+    throw error
   } finally {
-    clearTimeout(timeoutId);
+    clearTimeout(timeoutId)
   }
 }
 
@@ -113,9 +113,9 @@ export class HttpService {
         DEFAULT_RETRY_OPTIONS.retryableStatusCodes,
       timeout: options.timeout ?? DEFAULT_RETRY_OPTIONS.timeout,
       headers: options.headers ?? DEFAULT_RETRY_OPTIONS.headers,
-    };
+    }
 
-    let lastError: Error | null = null;
+    let lastError: Error | null = null
 
     for (let attempt = 0; attempt <= retryOptions.maxRetries; attempt++) {
       try {
@@ -123,21 +123,21 @@ export class HttpService {
           ...options,
           timeout: retryOptions.timeout,
           headers: retryOptions.headers,
-        });
+        })
 
         // If response is successful or not retryable, return it
         if (
           response.ok ||
           !isRetryableStatus(response.status, retryOptions.retryableStatusCodes)
         ) {
-          return response;
+          return response
         }
-        console.log("Attempt: ", attempt);
+        console.log('Attempt: ', attempt)
         // If this is the last attempt, throw error
         if (attempt === retryOptions.maxRetries) {
           throw new NetworkError(
             `Request failed after ${retryOptions.maxRetries + 1} attempts: ${response.status} ${response.statusText}`,
-          );
+          )
         }
 
         // Calculate delay and wait before retry
@@ -146,38 +146,38 @@ export class HttpService {
           retryOptions.initialDelay,
           retryOptions.backoffFactor,
           retryOptions.maxDelay,
-        );
-        await sleep(delay);
+        )
+        await sleep(delay)
       } catch (error) {
-        lastError = error as Error;
+        lastError = error as Error
 
         // Don't retry on certain errors
         if (
           error instanceof NetworkError &&
-          error.message.includes("timeout")
+          error.message.includes('timeout')
         ) {
           if (attempt === retryOptions.maxRetries) {
-            throw error;
+            throw error
           }
           const delay = calculateDelay(
             attempt,
             retryOptions.initialDelay,
             retryOptions.backoffFactor,
             retryOptions.maxDelay,
-          );
-          await sleep(delay);
-          continue;
+          )
+          await sleep(delay)
+          continue
         }
 
         // If this is the last attempt, throw error
         if (attempt === retryOptions.maxRetries) {
           if (lastError instanceof NetworkError) {
-            throw lastError;
+            throw lastError
           }
           throw new NetworkError(
             `Request failed after ${retryOptions.maxRetries + 1} attempts: ${lastError.message}`,
             lastError,
-          );
+          )
         }
 
         // Calculate delay and wait before retry
@@ -186,15 +186,15 @@ export class HttpService {
           retryOptions.initialDelay,
           retryOptions.backoffFactor,
           retryOptions.maxDelay,
-        );
-        await sleep(delay);
+        )
+        await sleep(delay)
       }
     }
 
     throw new NetworkError(
-      `Request failed after ${retryOptions.maxRetries + 1} attempts: ${lastError?.message ?? "Unknown error"}`,
+      `Request failed after ${retryOptions.maxRetries + 1} attempts: ${lastError?.message ?? 'Unknown error'}`,
       lastError ?? undefined,
-    );
+    )
   }
 
   /**
@@ -205,21 +205,21 @@ export class HttpService {
    * @throws NetworkError if fetch or parsing fails
    */
   async fetchJson<T>(url: string, options?: FetchOptions): Promise<T> {
-    const response = await this.fetch(url, options);
+    const response = await this.fetch(url, options)
 
     if (!response.ok) {
       throw new NetworkError(
         `Failed to fetch JSON from ${url}: ${response.status} ${response.statusText}`,
-      );
+      )
     }
 
     try {
-      return (await response.json()) as T;
+      return (await response.json()) as T
     } catch (error) {
       throw new NetworkError(
         `Failed to parse JSON from ${url}: ${(error as Error).message}`,
         error as Error,
-      );
+      )
     }
   }
 
@@ -231,21 +231,21 @@ export class HttpService {
    * @throws NetworkError if fetch fails
    */
   async fetchText(url: string, options?: FetchOptions): Promise<string> {
-    const response = await this.fetch(url, options);
+    const response = await this.fetch(url, options)
 
     if (!response.ok) {
       throw new NetworkError(
         `Failed to fetch text from ${url}: ${response.status} ${response.statusText}`,
-      );
+      )
     }
 
     try {
-      return await response.text();
+      return await response.text()
     } catch (error) {
       throw new NetworkError(
         `Failed to read text from ${url}: ${(error as Error).message}`,
         error as Error,
-      );
+      )
     }
   }
 }

@@ -1,6 +1,6 @@
-import { promises as fs } from "fs";
-import path from "path";
-import type { IFileSystemService } from "../types/interfaces";
+import { promises as fs } from 'fs'
+import path from 'path'
+import type { IFileSystemService } from '../types/interfaces'
 
 /**
  * Service for file system operations
@@ -13,10 +13,10 @@ export class FilesystemService implements IFileSystemService {
    */
   async fileExists(filePath: string): Promise<boolean> {
     try {
-      await fs.access(filePath);
-      return true;
+      await fs.access(filePath)
+      return true
     } catch {
-      return false;
+      return false
     }
   }
 
@@ -28,8 +28,8 @@ export class FilesystemService implements IFileSystemService {
    * @throws Error if write fails
    */
   async writeFile(filePath: string, content: string): Promise<void> {
-    await fs.mkdir(path.dirname(filePath), { recursive: true });
-    await fs.writeFile(filePath, content, "utf-8");
+    await fs.mkdir(path.dirname(filePath), { recursive: true })
+    await fs.writeFile(filePath, content, 'utf-8')
   }
 
   /**
@@ -39,7 +39,7 @@ export class FilesystemService implements IFileSystemService {
    * @throws Error if file doesn't exist or read fails
    */
   async readFile(filePath: string): Promise<string> {
-    return await fs.readFile(filePath, "utf-8");
+    return await fs.readFile(filePath, 'utf-8')
   }
 
   /**
@@ -49,6 +49,6 @@ export class FilesystemService implements IFileSystemService {
    * @throws Error if directory creation fails
    */
   async ensureDir(dirPath: string): Promise<void> {
-    await fs.mkdir(dirPath, { recursive: true });
+    await fs.mkdir(dirPath, { recursive: true })
   }
 }

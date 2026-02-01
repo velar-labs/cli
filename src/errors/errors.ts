@@ -11,8 +11,8 @@ export class RegistryError extends Error {
     message: string,
     public readonly cause?: Error,
   ) {
-    super(message);
-    this.name = "RegistryError";
+    super(message)
+    this.name = 'RegistryError'
   }
 }
 
@@ -26,8 +26,8 @@ export class NetworkError extends RegistryError {
    * @param cause - Original error that caused this error
    */
   constructor(message: string, cause?: Error) {
-    super(message, cause);
-    this.name = "NetworkError";
+    super(message, cause)
+    this.name = 'NetworkError'
   }
 }
 
@@ -41,7 +41,7 @@ export class ComponentNotFoundError extends RegistryError {
    * @param cause - Original error that caused this error
    */
   constructor(componentName: string, cause?: Error) {
-    super(`Component "${componentName}" not found`, cause);
-    this.name = "ComponentNotFoundError";
+    super(`Component "${componentName}" not found`, cause)
+    this.name = 'ComponentNotFoundError'
   }
 }

@@ -1,5 +1,5 @@
-import fs from "fs";
-import type { VelarConfig } from "../types";
+import fs from 'fs'
+import type { VelarConfig } from '../types'
 
 /**
  * Write Velar configuration to velar.json file
@@ -7,11 +7,7 @@ import type { VelarConfig } from "../types";
  * @throws Error if file write fails
  */
 export function writeVelarConfig(config: VelarConfig): void {
-  fs.writeFileSync(
-    "velar.json",
-    JSON.stringify(config, null, 2) + "\n",
-    "utf8",
-  );
+  fs.writeFileSync('velar.json', JSON.stringify(config, null, 2) + '\n', 'utf8')
 }
 
 /**
@@ -20,8 +16,8 @@ export function writeVelarConfig(config: VelarConfig): void {
  * @throws Error if file doesn't exist or is invalid
  */
 export function readVelarConfig(): VelarConfig {
-  if (!fs.existsSync("velar.json")) {
-    throw new Error("Velar configuration not found.");
+  if (!fs.existsSync('velar.json')) {
+    throw new Error('Velar configuration not found.')
   }
-  return JSON.parse(fs.readFileSync("velar.json", "utf8")) as VelarConfig;
+  return JSON.parse(fs.readFileSync('velar.json', 'utf8')) as VelarConfig
 }

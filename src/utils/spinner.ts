@@ -1,4 +1,4 @@
-import ora, { type Ora } from "ora";
+import ora, { type Ora } from 'ora'
 
 /**
  * Utility to manage loading spinners
@@ -10,7 +10,7 @@ export const spinner = {
    * @returns Ora spinner instance
    */
   start(message: string): Ora {
-    return ora(message).start();
+    return ora(message).start()
   },
 
   /**
@@ -27,18 +27,18 @@ export const spinner = {
     successMessage?: string,
     failMessage?: string,
   ): Promise<T> {
-    const s = this.start(message);
+    const s = this.start(message)
     try {
-      const result = await task();
+      const result = await task()
       if (successMessage) {
-        s.succeed(successMessage);
+        s.succeed(successMessage)
       } else {
-        s.stop();
+        s.stop()
       }
-      return result;
+      return result
     } catch (error) {
-      s.fail(failMessage || "Operation failed");
-      throw error;
+      s.fail(failMessage || 'Operation failed')
+      throw error
     }
   },
-};
+}

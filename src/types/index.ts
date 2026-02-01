@@ -1,26 +1,26 @@
 /**
  * Supported file types for Velar components
  */
-export type VelarFileType = "blade" | "js" | "css";
+export type VelarFileType = 'blade' | 'js' | 'css'
 
 /**
  * Supported package managers
  */
-export type PackageManager = "npm" | "yarn" | "pnpm" | "bun";
+export type PackageManager = 'npm' | 'yarn' | 'pnpm' | 'bun'
 
 /**
  * Available color themes
  */
-export type VelarTheme = "neutral" | "gray" | "slate" | "stone" | "zinc";
+export type VelarTheme = 'neutral' | 'gray' | 'slate' | 'stone' | 'zinc'
 
 /**
  * Represents a file in a Velar component
  */
 export interface VelarComponentFile {
   /** File type */
-  type: VelarFileType;
+  type: VelarFileType
   /** Relative file path */
-  path: string;
+  path: string
 }
 
 /**
@@ -28,9 +28,9 @@ export interface VelarComponentFile {
  */
 export interface VelarDependency {
   /** Composer (PHP) dependencies */
-  composer?: readonly string[];
+  composer?: readonly string[]
   /** npm/yarn/pnpm/bun dependencies */
-  npm?: readonly string[];
+  npm?: readonly string[]
 }
 
 /**
@@ -38,17 +38,17 @@ export interface VelarDependency {
  */
 export interface VelarComponentMeta {
   /** Unique component name */
-  name: string;
+  name: string
   /** Component description */
-  description?: string;
+  description?: string
   /** Component categories */
-  categories?: readonly string[];
+  categories?: readonly string[]
   /** List of component files */
-  files: readonly VelarComponentFile[];
+  files: readonly VelarComponentFile[]
   /** Component dependencies */
-  dependencies?: VelarDependency;
+  dependencies?: VelarDependency
   /** Component path in registry */
-  path: string;
+  path: string
 }
 
 /**
@@ -56,7 +56,7 @@ export interface VelarComponentMeta {
  */
 export interface RegistryData {
   /** List of available components */
-  components: readonly VelarComponentMeta[];
+  components: readonly VelarComponentMeta[]
 }
 
 /**
@@ -64,28 +64,28 @@ export interface RegistryData {
  */
 export interface VelarConfig {
   /** Configuration version */
-  version: string;
+  version: string
   /** Selected color theme */
-  theme: VelarTheme;
+  theme: VelarTheme
   /** Package manager used */
-  packageManager: PackageManager;
+  packageManager: PackageManager
   /** CSS configuration */
   css: {
     /** Main CSS file path */
-    entry: string;
+    entry: string
     /** Velar CSS file path */
-    velar: string;
-  };
+    velar: string
+  }
   /** JS configuration */
   js: {
     /** Main JS file path */
-    entry: string;
-  };
+    entry: string
+  }
   /** Components configuration */
   components: {
     /** Path where components are stored */
-    path: string;
-  };
+    path: string
+  }
 }
 
 /**
@@ -93,29 +93,29 @@ export interface VelarConfig {
  */
 export interface GitHubFile {
   /** File name */
-  name: string;
+  name: string
   /** Full file path */
-  path: string;
+  path: string
   /** File SHA */
-  sha: string;
+  sha: string
   /** File size in bytes */
-  size: number;
+  size: number
   /** API URL */
-  url: string;
+  url: string
   /** HTML URL */
-  html_url: string;
+  html_url: string
   /** Git URL */
-  git_url: string;
+  git_url: string
   /** Direct download URL */
-  download_url: string | null;
+  download_url: string | null
   /** File type */
-  type: "file" | "dir";
+  type: 'file' | 'dir'
   /** Associated links */
   _links: {
-    self: string;
-    git: string;
-    html: string;
-  };
+    self: string
+    git: string
+    html: string
+  }
 }
 
 /**
@@ -123,9 +123,9 @@ export interface GitHubFile {
  */
 export interface FailedComponent {
   /** Component name */
-  name: string;
+  name: string
   /** Error message */
-  error: string;
+  error: string
 }
 
 /**
@@ -133,11 +133,11 @@ export interface FailedComponent {
  */
 export interface AddResult {
   /** Names of successfully added files */
-  added: readonly string[];
+  added: readonly string[]
   /** Names of skipped files */
-  skipped: readonly string[];
+  skipped: readonly string[]
   /** Components that failed */
-  failed: readonly FailedComponent[];
+  failed: readonly FailedComponent[]
 }
 
 /**
@@ -145,9 +145,9 @@ export interface AddResult {
  */
 export interface ComponentList {
   /** List of components */
-  components: readonly VelarComponentMeta[];
+  components: readonly VelarComponentMeta[]
   /** List of available categories */
-  categories: readonly string[];
+  categories: readonly string[]
 }
 
 /**
@@ -155,9 +155,9 @@ export interface ComponentList {
  */
 export interface FileInfo {
   /** File path */
-  path: string;
+  path: string
   /** File content */
-  content: string;
+  content: string
 }
 
 /**
@@ -165,15 +165,15 @@ export interface FileInfo {
  */
 export interface RetryOptions {
   /** Maximum number of retry attempts */
-  maxRetries?: number;
+  maxRetries?: number
   /** Initial delay in milliseconds */
-  initialDelay?: number;
+  initialDelay?: number
   /** Delay multiplication factor */
-  backoffFactor?: number;
+  backoffFactor?: number
   /** Maximum delay in milliseconds */
-  maxDelay?: number;
+  maxDelay?: number
   /** HTTP status codes to retry */
-  retryableStatusCodes?: readonly number[];
+  retryableStatusCodes?: readonly number[]
 }
 
 /**
@@ -181,7 +181,7 @@ export interface RetryOptions {
  */
 export interface FetchOptions extends RetryOptions {
   /** Timeout in milliseconds */
-  timeout?: number;
+  timeout?: number
   /** Custom headers */
-  headers?: Record<string, string>;
+  headers?: Record<string, string>
 }

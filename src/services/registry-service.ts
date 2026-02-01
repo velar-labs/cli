@@ -1,31 +1,27 @@
-import type {
-  GitHubFile,
-  RegistryData,
-  VelarComponentMeta,
-} from "../types";
-import type { IRegistryService } from "../types/interfaces";
+import type { GitHubFile, RegistryData, VelarComponentMeta } from '../types'
+import type { IRegistryService } from '../types/interfaces'
 import {
   fetchComponent,
   fetchComponentFile,
   fetchGitHubRegistry,
-} from "../utils/remote-registry";
+} from '../utils/remote-registry'
 
-import { HttpService } from "./http-service";
+import { HttpService } from './http-service'
 
-import { spinner } from "../utils/spinner";
+import { spinner } from '../utils/spinner'
 
 /**
  * Service for interacting with the Velar component registry
  */
 export class RegistryService implements IRegistryService {
-  private readonly httpService: HttpService;
+  private readonly httpService: HttpService
 
   /**
    * Create a new RegistryService instance
    * @param httpService - Optional HTTP service instance (creates new one if not provided)
    */
   constructor(httpService?: HttpService) {
-    this.httpService = httpService ?? new HttpService();
+    this.httpService = httpService ?? new HttpService()
   }
 
   /**
@@ -35,11 +31,11 @@ export class RegistryService implements IRegistryService {
    */
   async fetchRegistry(): Promise<RegistryData> {
     return await spinner.withTask(
-      "Fetching registry...",
+      'Fetching registry...',
       () => fetchGitHubRegistry(),
       undefined,
-      "Failed to fetch registry",
-    );
+      'Failed to fetch registry',
+    )
   }
 
   /**
@@ -55,8 +51,8 @@ export class RegistryService implements IRegistryService {
       () => fetchComponent(name),
       undefined,
       `Failed to fetch component "${name}"`,
-    );
-    return await this.parseComponentMeta(file);
+    )
+    return await this.parseComponentMeta(file)
   }
 
   /**
@@ -68,13 +64,13 @@ export class RegistryService implements IRegistryService {
    * @throws NetworkError if fetch fails
    */
   async fetchFile(componentUrl: string, path: string): Promise<string> {
-    const componentName = componentUrl.split("/").pop() || componentUrl;
+    const componentName = componentUrl.split('/').pop() || componentUrl
     return await spinner.withTask(
       `Downloading ${path}...`,
       () => fetchComponentFile(componentName, path),
       undefined,
       `Failed to fetch file "${path}"`,
-    );
+    )
   }
 
   /**
@@ -85,20 +81,20 @@ export class RegistryService implements IRegistryService {
   async resolveDependencies(
     component: VelarComponentMeta,
   ): Promise<readonly VelarComponentMeta[]> {
-    const visited = new Set<string>();
-    const resolved: VelarComponentMeta[] = [];
+    const visited = new Set<string>()
+    const resolved: VelarComponentMeta[] = []
 
     const resolve = async (comp: VelarComponentMeta) => {
-      if (visited.has(comp.name)) return;
-      visited.add(comp.name);
-      resolved.push(comp);
+      if (visited.has(comp.name)) return
+      visited.add(comp.name)
+      resolved.push(comp)
 
       // Component dependencies would be resolved here if they exist
       // For now, just add the component itself
-    };
+    }
 
-    await resolve(component);
-    return resolved;
+    await resolve(component)
+    return resolved
   }
 
   /**
@@ -111,16 +107,16 @@ export class RegistryService implements IRegistryService {
     file: GitHubFile,
   ): Promise<VelarComponentMeta> {
     if (!file.download_url) {
-      throw new Error("GitHub file has no download URL");
+      throw new Error('GitHub file has no download URL')
     }
 
     try {
-      const raw = await this.httpService.fetchText(file.download_url);
-      return JSON.parse(raw) as VelarComponentMeta;
+      const raw = await this.httpService.fetchText(file.download_url)
+      return JSON.parse(raw) as VelarComponentMeta
     } catch (error) {
       throw new Error(
         `Failed to parse component meta: ${(error as Error).message}`,
-      );
+      )
     }
   }
 }
