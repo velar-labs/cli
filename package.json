@@ -1,5 +1,5 @@
 {
-  "name": "@velar/cli",
+  "name": "velyx",
   "version": "1.0.0",
   "description": "CLI to add composable UI components to Laravel projects",
   "author": "",
@@ -9,7 +9,7 @@
     "node": ">=20"
   },
   "bin": {
-    "velar": "./dist/index.js"
+    "velyx": "./dist/index.js"
   },
   "files": [
     "dist"
@@ -24,7 +24,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/velar-ui/cli.git"
+    "url": "https://github.com/velyx-labs/cli.git"
   },
   "publishConfig": {
     "access": "public"
