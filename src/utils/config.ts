@@ -1,5 +1,6 @@
 import fs from 'fs'
 import type { VelyxConfig } from '../types'
+import { logger } from './logger'
 
 /**
  * Write Velyx configuration to velyx.json file
@@ -17,7 +18,8 @@ export function writeVelyxConfig(config: VelyxConfig): void {
  */
 export function readVelyxConfig(): VelyxConfig {
   if (!fs.existsSync('velyx.json')) {
-    throw new Error('Velyx configuration not found.')
+    logger.error('Velyx configuration not found.');
+    process.exit(1);
   }
   return JSON.parse(fs.readFileSync('velyx.json', 'utf8')) as VelyxConfig
 }

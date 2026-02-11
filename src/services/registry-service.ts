@@ -1,38 +1,31 @@
-import type { GitHubFile, RegistryData, VelyxComponentMeta } from '../types'
+import type { VelyxComponentMeta } from '../types'
 import type { IRegistryService } from '../types/interfaces'
-import {
-  fetchComponent,
-  fetchComponentFile,
-  fetchGitHubRegistry,
-} from '../utils/remote-registry'
-
-import { HttpService } from './http-service'
-
+import { VelyxRegistryService } from './velyx-registry-service'
 import { spinner } from '../utils/spinner'
 
 /**
- * Service for interacting with the Velyx component registry
+ * Service for interacting with Velyx component registry
+ * This is a wrapper around VelyxRegistryService for backward compatibility
  */
 export class RegistryService implements IRegistryService {
-  private readonly httpService: HttpService
+  private readonly velyxService: VelyxRegistryService
 
   /**
    * Create a new RegistryService instance
-   * @param httpService - Optional HTTP service instance (creates new one if not provided)
    */
-  constructor(httpService?: HttpService) {
-    this.httpService = httpService ?? new HttpService()
+  constructor() {
+    this.velyxService = new VelyxRegistryService()
   }
 
   /**
-   * Fetch the complete registry data
+   * Fetch complete registry data
    * @returns Promise resolving to registry data
    * @throws NetworkError if fetch fails
    */
-  async fetchRegistry(): Promise<RegistryData> {
+  async fetchRegistry(): Promise<{ components: readonly VelyxComponentMeta[] }> {
     return await spinner.withTask(
       'Fetching registry...',
-      () => fetchGitHubRegistry(),
+      () => this.velyxService.fetchRegistry(),
       undefined,
       'Failed to fetch registry',
     )
@@ -46,13 +39,12 @@ export class RegistryService implements IRegistryService {
    * @throws NetworkError if fetch fails
    */
   async fetchComponent(name: string): Promise<VelyxComponentMeta> {
-    const file = await spinner.withTask(
+    return await spinner.withTask(
       `Fetching component "${name}" metadata...`,
-      () => fetchComponent(name),
+      () => this.velyxService.fetchComponent(name),
       undefined,
       `Failed to fetch component "${name}"`,
     )
-    return await this.parseComponentMeta(file)
   }
 
   /**
@@ -64,10 +56,9 @@ export class RegistryService implements IRegistryService {
    * @throws NetworkError if fetch fails
    */
   async fetchFile(componentUrl: string, path: string): Promise<string> {
-    const componentName = componentUrl.split('/').pop() || componentUrl
     return await spinner.withTask(
       `Downloading ${path}...`,
-      () => fetchComponentFile(componentName, path),
+      () => this.velyxService.fetchFile(componentUrl, path),
       undefined,
       `Failed to fetch file "${path}"`,
     )
@@ -81,42 +72,11 @@ export class RegistryService implements IRegistryService {
   async resolveDependencies(
     component: VelyxComponentMeta,
   ): Promise<readonly VelyxComponentMeta[]> {
-    const visited = new Set<string>()
-    const resolved: VelyxComponentMeta[] = []
-
-    const resolve = async (comp: VelyxComponentMeta) => {
-      if (visited.has(comp.name)) return
-      visited.add(comp.name)
-      resolved.push(comp)
-
-      // Component dependencies would be resolved here if they exist
-      // For now, just add the component itself
-    }
-
-    await resolve(component)
-    return resolved
-  }
-
-  /**
-   * Parse component metadata from GitHub file
-   * @param file - GitHub file metadata
-   * @returns Promise resolving to component metadata
-   * @throws NetworkError if download or parsing fails
-   */
-  private async parseComponentMeta(
-    file: GitHubFile,
-  ): Promise<VelyxComponentMeta> {
-    if (!file.download_url) {
-      throw new Error('GitHub file has no download URL')
-    }
-
-    try {
-      const raw = await this.httpService.fetchText(file.download_url)
-      return JSON.parse(raw) as VelyxComponentMeta
-    } catch (error) {
-      throw new Error(
-        `Failed to parse component meta: ${(error as Error).message}`,
-      )
-    }
+    return await spinner.withTask(
+      'Resolving dependencies...',
+      () => this.velyxService.resolveDependencies(component),
+      undefined,
+      'Failed to resolve dependencies',
+    )
   }
 }

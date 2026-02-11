@@ -88,35 +88,7 @@ export interface VelyxConfig {
   }
 }
 
-/**
- * GitHub API file representation
- */
-export interface GitHubFile {
-  /** File name */
-  name: string
-  /** Full file path */
-  path: string
-  /** File SHA */
-  sha: string
-  /** File size in bytes */
-  size: number
-  /** API URL */
-  url: string
-  /** HTML URL */
-  html_url: string
-  /** Git URL */
-  git_url: string
-  /** Direct download URL */
-  download_url: string | null
-  /** File type */
-  type: 'file' | 'dir'
-  /** Associated links */
-  _links: {
-    self: string
-    git: string
-    html: string
-  }
-}
+
 
 /**
  * Component that failed during addition
@@ -184,4 +156,64 @@ export interface FetchOptions extends RetryOptions {
   timeout?: number
   /** Custom headers */
   headers?: Record<string, string>
+}
+
+/**
+ * Velyx Registry API v1 component metadata
+ */
+export interface RegistryComponent {
+  /** Component name */
+  name: string
+  /** Component version */
+  version: string
+  /** Latest version available */
+  latest: string
+  /** All available versions */
+  versions: readonly string[]
+  /** Component files mapped to project structure */
+  files: Record<string, string>
+  /** Component metadata */
+  meta: {
+    /** Required dependencies */
+    requires: readonly string[]
+    /** Whether Alpine.js is required */
+    requires_alpine: boolean
+    /** Component description */
+    description?: string
+    /** Laravel version requirement */
+    laravel?: string
+  }
+}
+
+/**
+ * Registry API v1 components list response
+ */
+export interface RegistryComponentsResponse {
+  /** Component list data */
+  data: readonly {
+    /** Component name */
+    name: string
+    /** Latest version */
+    latest_version: string
+    /** Component description */
+    description: string
+    /** Alpine.js requirement */
+    requires_alpine: boolean
+    /** Required dependencies */
+    requires: readonly string[]
+  }[]
+  /** Total number of components */
+  count: number
+}
+
+/**
+ * Registry API v1 versions response
+ */
+export interface RegistryVersionsResponse {
+  /** Component name */
+  name: string
+  /** Latest version */
+  latest: string
+  /** All available versions */
+  versions: readonly string[]
 }
