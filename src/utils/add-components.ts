@@ -89,7 +89,6 @@ export async function addComponents(options: AddOptions): Promise<void> {
   }
 
   const result = await addService.addComponents(componentNames)
-  console.log(result)
   addService.displayResults(result)
   addService.displayNextSteps(result)
 }
