@@ -80,7 +80,6 @@ export async function addComponents(options: AddOptions): Promise<void> {
     .map((component: { name: string }) => component.name)
     .sort((a: string, b: string) => a.localeCompare(b))
   const componentNames = await promptForRegistryComponents(options, available)
-
   try {
     addService.validateComponents(componentNames, registry)
   } catch (err) {
@@ -90,6 +89,7 @@ export async function addComponents(options: AddOptions): Promise<void> {
   }
 
   const result = await addService.addComponents(componentNames)
+  console.log(result)
   addService.displayResults(result)
   addService.displayNextSteps(result)
 }

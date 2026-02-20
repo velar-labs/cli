@@ -73,6 +73,7 @@ export class ComponentService {
     }
 
     for (const componentName of componentNames) {
+      console.log(`Adding component: ${componentName}`)
       try {
         const componentResult = await this.addComponent(componentName)
         result.added.push(...componentResult.added)
@@ -108,6 +109,7 @@ export class ComponentService {
 
     // Fetch component metadata
     const component = await this.registryService.fetchComponent(componentName)
+    console.log(`Fetched component metadata for ${componentName}`, component)
 
     // Resolve dependencies
     const componentsToAdd =

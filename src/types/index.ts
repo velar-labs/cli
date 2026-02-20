@@ -162,21 +162,26 @@ export interface FetchOptions extends RetryOptions {
 export interface RegistryComponent {
   /** Component name */
   name: string
-  /** Component description */
-  description: string
-  /** Component categories */
-  categories?: readonly string[]
-  /** Required dependencies */
-  requires: readonly string[]
-  /** Whether Alpine.js is required */
-  requires_alpine: boolean
-  /** Component version */
-  version: string
   /** Latest version available */
-  latest_version: string
+  latest: string
   /** All available versions */
   versions: readonly string[]
-  files: Record<string, string> // Map of file paths to content
+  /** Component description */
+  description: string
+  /** Whether Alpine.js is required */
+  requires_alpine: boolean
+  /** Required Composer dependencies */
+  requires: readonly string[]
+  /** Component categories */
+  categories?: readonly string[]
+  /** Component files mapped to project structure
+   * - blade: resources/views/components/ui/{name}.blade.php
+   * - js: resources/js/ui/{name}.js
+   * - css: resources/css/ui/{name}.css
+   */
+  files: Record<string, string>
+  /** Laravel version requirement */
+  laravel?: string
 }
 
 /**
@@ -188,7 +193,7 @@ export interface RegistryComponentsResponse {
     /** Component name */
     name: string
     /** Latest version */
-    latest_version: string
+    latest: string
     /** Component description */
     description: string
     /** Alpine.js requirement */

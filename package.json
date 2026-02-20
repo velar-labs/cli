@@ -41,7 +41,7 @@
     "build:prod": "cross-env NODE_ENV=production VELYX_REGISTRY_URL=https://registry.velyx.dev/api/v1 tsup",
     "check:ci": "pnpm run lint && pnpm run typecheck",
     "clean": "rimraf dist",
-    "dev": "tsup --watch",
+    "dev": "cross-env NODE_ENV=development VELYX_REGISTRY_URL=http://velyx.test/api/v1 tsup --watch",
     "check": "pnpm run format:write && eslint --fix",
     "format:check": "prettier --check \"**/*.{ts,tsx,mdx}\" --cache",
     "format:write": "prettier --write \"**/*.{ts,tsx,mdx}\" --cache",

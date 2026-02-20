@@ -3,6 +3,8 @@ import { z } from 'zod'
 import path from 'path'
 import { listComponents } from '@/src/utils/list-components'
 import { ErrorHandler } from '@/src/errors/ErrorHandler'
+import { logger } from '@/src/utils/logger'
+import { ConfigManager } from '@/src/config/config-manager'
 
 const listOptionsSchema = z.object({
   cwd: z.string(),
@@ -42,6 +44,17 @@ export const list = new Command()
       })
 
       process.chdir(options.cwd)
+
+      // Validate initialization
+      const configManager = new ConfigManager()
+      try {
+        await configManager.load()
+      } catch {
+        logger.error('Velyx is not initialized')
+        logger.log('Run velyx init first')
+        process.exit(1)
+      }
+
       await listComponents(options)
     } catch (error) {
       errorHandler.handle(error as Error, 'list command')
