@@ -27,8 +27,8 @@ function filterComponents(
       : false
     const categoryMatch = component.categories
       ? component.categories.some((category) =>
-        category.toLowerCase().includes(normalized),
-      )
+          category.toLowerCase().includes(normalized),
+        )
       : false
 
     return nameMatch || descriptionMatch || categoryMatch

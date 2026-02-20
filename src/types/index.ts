@@ -88,8 +88,6 @@ export interface VelyxConfig {
   }
 }
 
-
-
 /**
  * Component that failed during addition
  */
@@ -164,25 +162,21 @@ export interface FetchOptions extends RetryOptions {
 export interface RegistryComponent {
   /** Component name */
   name: string
+  /** Component description */
+  description: string
+  /** Component categories */
+  categories?: readonly string[]
+  /** Required dependencies */
+  requires: readonly string[]
+  /** Whether Alpine.js is required */
+  requires_alpine: boolean
   /** Component version */
   version: string
   /** Latest version available */
-  latest: string
+  latest_version: string
   /** All available versions */
   versions: readonly string[]
-  /** Component files mapped to project structure */
-  files: Record<string, string>
-  /** Component metadata */
-  meta: {
-    /** Required dependencies */
-    requires: readonly string[]
-    /** Whether Alpine.js is required */
-    requires_alpine: boolean
-    /** Component description */
-    description?: string
-    /** Laravel version requirement */
-    laravel?: string
-  }
+  files: Record<string, string> // Map of file paths to content
 }
 
 /**

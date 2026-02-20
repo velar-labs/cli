@@ -57,7 +57,7 @@ export class InitService {
    * Create a new InitService instance
    * @param fileSystem - File system service
    */
-  constructor(private readonly fileSystem: IFileSystemService) { }
+  constructor(private readonly fileSystem: IFileSystemService) {}
 
   /**
    * Validate the project environment

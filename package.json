@@ -32,11 +32,13 @@
   "packageManager": "pnpm@10.28.1+sha512.7d7dbbca9e99447b7c3bf7a73286afaaf6be99251eb9498baefa7d406892f67b879adb3a1d7e687fc4ccc1a388c7175fbaae567a26ab44d1067b54fcb0d6a316",
   "pnpm": {
     "overrides": {
-      "cli-spinners": "2.9.2"
+      "cli-spinners": "2.9.2",
+      "velyx": "link:../../../../.local/share/pnpm/global/5/node_modules/velyx"
     }
   },
   "scripts": {
-    "build": "tsup",
+    "build": "cross-env NODE_ENV=development VELYX_REGISTRY_URL=http://velyx.test/api/v1 tsup",
+    "build:prod": "cross-env NODE_ENV=production VELYX_REGISTRY_URL=https://registry.velyx.dev/api/v1 tsup",
     "check:ci": "pnpm run lint && pnpm run typecheck",
     "clean": "rimraf dist",
     "dev": "tsup --watch",
@@ -50,6 +52,7 @@
     "pub:release": "pnpm build && pnpm publish --access public",
     "release": "changeset version",
     "start": "node dist/index.js",
+    "start:dev": "cross-env NODE_ENV=development VELYX_REGISTRY_URL=http://velyx.test/api/v1 node dist/index.js",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
@@ -66,6 +69,7 @@
     "log-symbols": "^7.0.1",
     "ora": "^9.1.0",
     "prompts": "^2.4.2",
+    "velyx": "link:../../../../.local/share/pnpm/global/5/node_modules/velyx",
     "vite-tsconfig-paths": "^6.0.5",
     "zod": "^3.24.1",
     "zod-to-json-schema": "^3.24.6"
@@ -78,6 +82,7 @@
     "@types/node": "^25.0.9",
     "@types/prompts": "^2.4.9",
     "@vitest/coverage-v8": "^4.0.18",
+    "cross-env": "^10.1.0",
     "eslint": "^9.39.2",
     "globals": "^17.0.0",
     "jiti": "^2.6.1",

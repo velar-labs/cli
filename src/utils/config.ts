@@ -18,8 +18,8 @@ export function writeVelyxConfig(config: VelyxConfig): void {
  */
 export function readVelyxConfig(): VelyxConfig {
   if (!fs.existsSync('velyx.json')) {
-    logger.error('Velyx configuration not found.');
-    process.exit(1);
+    logger.error('Velyx configuration not found.')
+    process.exit(1)
   }
   return JSON.parse(fs.readFileSync('velyx.json', 'utf8')) as VelyxConfig
 }

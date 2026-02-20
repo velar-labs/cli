@@ -123,7 +123,8 @@ export class ComponentService {
         )
       } catch (error) {
         logger.warn(
-          `Failed to install dependencies for ${componentName}: ${(error as Error).message
+          `Failed to install dependencies for ${componentName}: ${
+            (error as Error).message
           }`,
         )
         // Continue with file installation even if dependencies fail
@@ -213,7 +214,8 @@ export class ComponentService {
       logger.success(`Auto-imported ${componentName} into ${jsEntry}`)
     } catch (error) {
       logger.warn(
-        `Failed to auto-import JS for ${componentName}: ${(error as Error).message
+        `Failed to auto-import JS for ${componentName}: ${
+          (error as Error).message
         }`,
       )
     }

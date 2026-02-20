@@ -22,7 +22,9 @@ export class RegistryService implements IRegistryService {
    * @returns Promise resolving to registry data
    * @throws NetworkError if fetch fails
    */
-  async fetchRegistry(): Promise<{ components: readonly VelyxComponentMeta[] }> {
+  async fetchRegistry(): Promise<{
+    components: readonly VelyxComponentMeta[]
+  }> {
     return await spinner.withTask(
       'Fetching registry...',
       () => this.velyxService.fetchRegistry(),

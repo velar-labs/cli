@@ -1,10 +1,8 @@
-import type { 
-  RegistryComponent, 
-  RegistryComponentsResponse, 
+import type {
+  RegistryComponent,
+  RegistryComponentsResponse,
   RegistryVersionsResponse,
   VelyxComponentMeta,
-  VelyxComponentFile,
-  VelyxDependency
 } from '../types'
 import type { IRegistryService } from '../types/interfaces'
 import { NetworkError, ComponentNotFoundError } from '../errors/errors'
@@ -32,25 +30,37 @@ export class VelyxRegistryService implements IRegistryService {
    * @returns Promise resolving to registry data
    * @throws NetworkError if fetch fails
    */
-  async fetchRegistry(): Promise<{ components: readonly VelyxComponentMeta[] }> {
+  async fetchRegistry(): Promise<{
+    components: readonly VelyxComponentMeta[]
+  }> {
     try {
-      const response = await this.httpService.fetch(`${this.baseUrl}/components`)
-      
+      const response = await this.httpService.fetch(
+        `${this.baseUrl}/components`,
+      )
+
       if (!response.ok) {
-        throw new NetworkError(`Failed to fetch registry: ${response.status} ${response.statusText}`)
+        throw new NetworkError(
+          `Failed to fetch registry: ${response.status} ${response.statusText}`,
+        )
       }
 
-      const data = await this.httpService.fetchJson<RegistryComponentsResponse>(`${this.baseUrl}/components`)
-      
+      const data = await this.httpService.fetchJson<RegistryComponentsResponse>(
+        `${this.baseUrl}/components`,
+      )
+
       // Convert Registry API v1 format to VelyxComponentMeta format
-      const components = data.data.map(component => this.convertRegistryComponentToMeta(component))
-      
+      const components = data.data.map((component) =>
+        this.convertRegistryComponentToMeta(component),
+      )
+
       return { components }
     } catch (error) {
       if (error instanceof NetworkError) {
         throw error
       }
-      throw new NetworkError(`Failed to fetch registry: ${(error as Error).message}`)
+      throw new NetworkError(
+        `Failed to fetch registry: ${(error as Error).message}`,
+      )
     }
   }
 
@@ -63,24 +73,35 @@ export class VelyxRegistryService implements IRegistryService {
    */
   async fetchComponent(name: string): Promise<VelyxComponentMeta> {
     try {
-      const response = await this.httpService.fetch(`${this.baseUrl}/components/${name}`)
-      
+      const response = await this.httpService.fetch(
+        `${this.baseUrl}/components/${name}`,
+      )
+
       if (response.status === 404) {
         throw new ComponentNotFoundError(name)
       }
-      
+
       if (!response.ok) {
-        throw new NetworkError(`Failed to fetch component: ${response.status} ${response.statusText}`)
+        throw new NetworkError(
+          `Failed to fetch component: ${response.status} ${response.statusText}`,
+        )
       }
 
-      const component = await this.httpService.fetchJson<RegistryComponent>(`${this.baseUrl}/components/${name}`)
-      
+      const component = await this.httpService.fetchJson<RegistryComponent>(
+        `${this.baseUrl}/components/${name}`,
+      )
+
       return this.convertRegistryComponentToMeta(component)
     } catch (error) {
-      if (error instanceof ComponentNotFoundError || error instanceof NetworkError) {
+      if (
+        error instanceof ComponentNotFoundError ||
+        error instanceof NetworkError
+      ) {
         throw error
       }
-      throw new NetworkError(`Failed to fetch component "${name}": ${(error as Error).message}`)
+      throw new NetworkError(
+        `Failed to fetch component "${name}": ${(error as Error).message}`,
+      )
     }
   }
 
@@ -95,31 +116,44 @@ export class VelyxRegistryService implements IRegistryService {
   async fetchFile(componentUrl: string, path: string): Promise<string> {
     try {
       const componentName = componentUrl.split('/').pop() || componentUrl
-      
-      const response = await this.httpService.fetch(`${this.baseUrl}/components/${componentName}`)
-      
+
+      const response = await this.httpService.fetch(
+        `${this.baseUrl}/components/${componentName}`,
+      )
+
       if (response.status === 404) {
         throw new ComponentNotFoundError(componentName)
       }
-      
+
       if (!response.ok) {
-        throw new NetworkError(`Failed to fetch component: ${response.status} ${response.statusText}`)
+        throw new NetworkError(
+          `Failed to fetch component: ${response.status} ${response.statusText}`,
+        )
       }
 
-      const component = await this.httpService.fetchJson<RegistryComponent>(`${this.baseUrl}/components/${componentName}`)
-      
+      const component = await this.httpService.fetchJson<RegistryComponent>(
+        `${this.baseUrl}/components/${componentName}`,
+      )
+
       // Find the file in the component's files
       const fileContent = component.files[path]
       if (fileContent === undefined) {
-        throw new NetworkError(`File "${path}" not found in component "${componentName}"`)
+        throw new NetworkError(
+          `File "${path}" not found in component "${componentName}"`,
+        )
       }
-      
+
       return fileContent
     } catch (error) {
-      if (error instanceof ComponentNotFoundError || error instanceof NetworkError) {
+      if (
+        error instanceof ComponentNotFoundError ||
+        error instanceof NetworkError
+      ) {
         throw error
       }
-      throw new NetworkError(`Failed to fetch file "${path}": ${(error as Error).message}`)
+      throw new NetworkError(
+        `Failed to fetch file "${path}": ${(error as Error).message}`,
+      )
     }
   }
 
@@ -160,49 +194,20 @@ export class VelyxRegistryService implements IRegistryService {
   /**
    * Convert Registry API v1 component format to VelyxComponentMeta
    */
-  private convertRegistryComponentToMeta(component: RegistryComponent | any): VelyxComponentMeta {
-    // Handle the list format vs detail format
-    const isListFormat = 'latest_version' in component
-    
-    if (isListFormat) {
-      // List format from /components endpoint
-      return {
-        name: component.name,
-        description: component.description,
-        files: [], // Empty for list format, populated when needed
-        dependencies: {
-          composer: component.requires,
-          npm: component.requires_alpine ? ['alpinejs'] : []
-        },
-        path: component.name
-      }
-    } else {
-      // Detail format from /components/{name} endpoint
-      const files: VelyxComponentFile[] = Object.keys(component.files).map(filePath => {
-        const extension = filePath.split('.').pop()?.toLowerCase()
-        let type: VelyxComponentFile['type'] = 'blade'
-        
-        if (extension === 'js') type = 'js'
-        else if (extension === 'css') type = 'css'
-        
-        return {
-          type,
-          path: filePath
-        }
-      })
-
-      const dependencies: VelyxDependency = {
-        composer: component.meta.requires,
-        npm: component.meta.requires_alpine ? ['alpinejs'] : []
-      }
-
-      return {
-        name: component.name,
-        description: component.meta.description,
-        files,
-        dependencies,
-        path: component.name
-      }
+  private convertRegistryComponentToMeta(
+    component: RegistryComponent,
+  ): VelyxComponentMeta {
+    // List format from /components endpoint
+    return {
+      name: component.name,
+      description: component.description,
+      files: [], // Empty for list format, populated when needed
+      dependencies: {
+        composer: component.requires,
+        npm: component.requires_alpine ? ['alpinejs'] : [],
+      },
+      path: component.name,
+      categories: component.categories || [],
     }
   }
 
@@ -213,22 +218,33 @@ export class VelyxRegistryService implements IRegistryService {
    */
   async getComponentVersions(name: string): Promise<RegistryVersionsResponse> {
     try {
-      const response = await this.httpService.fetch(`${this.baseUrl}/components/${name}/versions`)
-      
+      const response = await this.httpService.fetch(
+        `${this.baseUrl}/components/${name}/versions`,
+      )
+
       if (response.status === 404) {
         throw new ComponentNotFoundError(name)
       }
-      
+
       if (!response.ok) {
-        throw new NetworkError(`Failed to fetch component versions: ${response.status} ${response.statusText}`)
+        throw new NetworkError(
+          `Failed to fetch component versions: ${response.status} ${response.statusText}`,
+        )
       }
 
-      return await this.httpService.fetchJson<RegistryVersionsResponse>(`${this.baseUrl}/components/${name}/versions`)
+      return await this.httpService.fetchJson<RegistryVersionsResponse>(
+        `${this.baseUrl}/components/${name}/versions`,
+      )
     } catch (error) {
-      if (error instanceof ComponentNotFoundError || error instanceof NetworkError) {
+      if (
+        error instanceof ComponentNotFoundError ||
+        error instanceof NetworkError
+      ) {
         throw error
       }
-      throw new NetworkError(`Failed to fetch versions for "${name}": ${(error as Error).message}`)
+      throw new NetworkError(
+        `Failed to fetch versions for "${name}": ${(error as Error).message}`,
+      )
     }
   }
 }
