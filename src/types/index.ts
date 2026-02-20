@@ -14,13 +14,15 @@ export type PackageManager = 'npm' | 'yarn' | 'pnpm' | 'bun'
 export type VelyxTheme = 'neutral' | 'gray' | 'slate' | 'stone' | 'zinc'
 
 /**
- * Represents a file in a Velyx component
+ * Represents a file in a Velyx component (with content)
  */
 export interface VelyxComponentFile {
-  /** File type */
+  /** File type (blade, js, css) */
   type: VelyxFileType
   /** Relative file path */
   path: string
+  /** File content */
+  content: string
 }
 
 /**
@@ -34,21 +36,25 @@ export interface VelyxDependency {
 }
 
 /**
- * Velyx component metadata
+ * Velyx component metadata (from registry list endpoint)
  */
 export interface VelyxComponentMeta {
   /** Unique component name */
   name: string
   /** Component description */
-  description?: string
+  description: string
+  /** Latest version available */
+  latest: string
+  /** All available versions */
+  versions: readonly string[]
   /** Component categories */
   categories?: readonly string[]
-  /** List of component files */
-  files: readonly VelyxComponentFile[]
-  /** Component dependencies */
-  dependencies?: VelyxDependency
-  /** Component path in registry */
-  path: string
+  /** Whether Alpine.js is required */
+  requires_alpine: boolean
+  /** Required Composer dependencies */
+  requires: readonly string[]
+  /** Laravel version requirement */
+  laravel?: string
 }
 
 /**
@@ -57,6 +63,8 @@ export interface VelyxComponentMeta {
 export interface RegistryData {
   /** List of available components */
   components: readonly VelyxComponentMeta[]
+  /** Total number of components */
+  count: number
 }
 
 /**
@@ -157,31 +165,13 @@ export interface FetchOptions extends RetryOptions {
 }
 
 /**
- * Velyx Registry API v1 component metadata
+ * Velyx Registry API v1 component metadata (with files)
  */
-export interface RegistryComponent {
-  /** Component name */
-  name: string
-  /** Latest version available */
-  latest: string
-  /** All available versions */
-  versions: readonly string[]
-  /** Component description */
-  description: string
-  /** Whether Alpine.js is required */
-  requires_alpine: boolean
-  /** Required Composer dependencies */
-  requires: readonly string[]
-  /** Component categories */
-  categories?: readonly string[]
-  /** Component files mapped to project structure
-   * - blade: resources/views/components/ui/{name}.blade.php
-   * - js: resources/js/ui/{name}.js
-   * - css: resources/css/ui/{name}.css
-   */
+export interface RegistryComponentWithFiles extends VelyxComponentMeta {
+  /** Component version (if specific version requested) */
+  version?: string
+  /** Component files with content mapped to project structure */
   files: Record<string, string>
-  /** Laravel version requirement */
-  laravel?: string
 }
 
 /**
@@ -189,18 +179,7 @@ export interface RegistryComponent {
  */
 export interface RegistryComponentsResponse {
   /** Component list data */
-  data: readonly {
-    /** Component name */
-    name: string
-    /** Latest version */
-    latest: string
-    /** Component description */
-    description: string
-    /** Alpine.js requirement */
-    requires_alpine: boolean
-    /** Required dependencies */
-    requires: readonly string[]
-  }[]
+  data: Record<string, VelyxComponentMeta>
   /** Total number of components */
   count: number
 }
@@ -215,4 +194,27 @@ export interface RegistryVersionsResponse {
   latest: string
   /** All available versions */
   versions: readonly string[]
+}
+
+/**
+ * Registry API v1 component detail response
+ */
+export interface RegistryComponentResponse {
+  /** Component data */
+  data: RegistryComponentWithFiles
+}
+
+/**
+ * Registry API v1 versions list response
+ */
+export interface RegistryVersionsListResponse {
+  /** Versions data */
+  data: {
+    /** Component name */
+    name: string
+    /** Latest version */
+    latest: string
+    /** All available versions */
+    versions: readonly string[]
+  }
 }

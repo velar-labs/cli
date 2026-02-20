@@ -1,7 +1,8 @@
 import type {
-  RegistryComponent,
+  RegistryComponentWithFiles,
   RegistryComponentsResponse,
   RegistryVersionsResponse,
+  RegistryComponentResponse,
   VelyxComponentMeta,
 } from '../types'
 import type { IRegistryService } from '../types/interfaces'
@@ -32,6 +33,7 @@ export class VelyxRegistryService implements IRegistryService {
    */
   async fetchRegistry(): Promise<{
     components: readonly VelyxComponentMeta[]
+    count: number
   }> {
     try {
       const response = await this.httpService.fetch(
@@ -48,12 +50,10 @@ export class VelyxRegistryService implements IRegistryService {
         `${this.baseUrl}/components`,
       )
 
-      // Convert Registry API v1 format to VelyxComponentMeta format
-      const components = data.data.map((component) =>
-        this.convertRegistryComponentToMeta(component),
-      )
+      // Convert Registry API v1 format (object with keys) to array
+      const components = Object.values(data.data)
 
-      return { components }
+      return { components, count: data.count }
     } catch (error) {
       if (error instanceof NetworkError) {
         throw error
@@ -67,15 +67,19 @@ export class VelyxRegistryService implements IRegistryService {
   /**
    * Fetch metadata for a specific component
    * @param name - Component name
-   * @returns Promise resolving to component metadata
+   * @param options - Optional parameters (version, includeFiles)
+   * @returns Promise resolving to component metadata (with files if includeFiles is true)
    * @throws ComponentNotFoundError if component doesn't exist
    * @throws NetworkError if fetch fails
    */
-  async fetchComponent(name: string): Promise<VelyxComponentMeta> {
+  async fetchComponent(
+    name: string,
+    options?: { version?: string; includeFiles?: boolean },
+  ): Promise<VelyxComponentMeta | RegistryComponentWithFiles> {
     try {
-      const response = await this.httpService.fetch(
-        `${this.baseUrl}/components/${name}`,
-      )
+      const url = this.buildComponentUrl(name, options)
+
+      const response = await this.httpService.fetch(url)
 
       if (response.status === 404) {
         throw new ComponentNotFoundError(name)
@@ -87,11 +91,14 @@ export class VelyxRegistryService implements IRegistryService {
         )
       }
 
-      const component = await this.httpService.fetchJson<RegistryComponent>(
-        `${this.baseUrl}/components/${name}`,
-      )
+      const result =
+        await this.httpService.fetchJson<RegistryComponentResponse>(url)
 
-      return this.convertRegistryComponentToMeta(component)
+      if (options?.includeFiles) {
+        return result.data
+      }
+
+      return this.convertRegistryComponentToMeta(result.data)
     } catch (error) {
       if (
         error instanceof ComponentNotFoundError ||
@@ -131,9 +138,10 @@ export class VelyxRegistryService implements IRegistryService {
         )
       }
 
-      const component = await this.httpService.fetchJson<RegistryComponent>(
-        `${this.baseUrl}/components/${componentName}`,
-      )
+      const component =
+        await this.httpService.fetchJson<RegistryComponentWithFiles>(
+          `${this.baseUrl}/components/${componentName}`,
+        )
 
       // Find the file in the component's files
       const fileContent = component.files[path]
@@ -174,8 +182,8 @@ export class VelyxRegistryService implements IRegistryService {
       resolved.push(comp)
 
       // Resolve dependencies from the 'requires' field
-      if (comp.dependencies?.composer) {
-        for (const dep of comp.dependencies.composer) {
+      if (comp.requires && comp.requires.length > 0) {
+        for (const dep of comp.requires) {
           try {
             // Try to fetch dependency as a Velyx component
             const depComponent = await this.fetchComponent(dep)
@@ -195,20 +203,39 @@ export class VelyxRegistryService implements IRegistryService {
    * Convert Registry API v1 component format to VelyxComponentMeta
    */
   private convertRegistryComponentToMeta(
-    component: RegistryComponent,
+    component: RegistryComponentWithFiles,
   ): VelyxComponentMeta {
-    // List format from /components endpoint
     return {
       name: component.name,
       description: component.description,
-      files: [], // Empty for list format, populated when needed
-      dependencies: {
-        composer: component.requires,
-        npm: component.requires_alpine ? ['alpinejs'] : [],
-      },
-      path: component.name,
-      categories: component.categories || [],
+      latest: component.latest,
+      versions: component.versions,
+      requires_alpine: component.requires_alpine,
+      requires: component.requires,
+      categories: component.categories,
+      laravel: component.laravel,
     }
+  }
+
+  /**
+   * Build URL for fetching component with optional parameters
+   */
+  private buildComponentUrl(
+    name: string,
+    options?: { version?: string; includeFiles?: boolean },
+  ): string {
+    const params = new URLSearchParams()
+
+    if (options?.version) {
+      params.append('version', options.version)
+    }
+
+    if (options?.includeFiles) {
+      params.append('include', 'files')
+    }
+
+    const queryString = params.toString()
+    return `${this.baseUrl}/components/${name}${queryString ? `?${queryString}` : ''}`
   }
 
   /**

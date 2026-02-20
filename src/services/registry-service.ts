@@ -1,11 +1,17 @@
-import type { VelyxComponentMeta } from '../types'
-import type { IRegistryService } from '../types/interfaces'
+import type {
+  VelyxComponentMeta,
+  RegistryComponentWithFiles,
+} from '../types'
+import type {
+  IRegistryService,
+  FetchComponentOptions,
+} from '../types/interfaces'
 import { VelyxRegistryService } from './velyx-registry-service'
 import { spinner } from '../utils/spinner'
 
 /**
  * Service for interacting with Velyx component registry
- * This is a wrapper around VelyxRegistryService for backward compatibility
+ * This is a wrapper around VelyxRegistryService with UI feedback
  */
 export class RegistryService implements IRegistryService {
   private readonly velyxService: VelyxRegistryService
@@ -24,6 +30,7 @@ export class RegistryService implements IRegistryService {
    */
   async fetchRegistry(): Promise<{
     components: readonly VelyxComponentMeta[]
+    count: number
   }> {
     return await spinner.withTask(
       'Fetching registry...',
@@ -36,33 +43,24 @@ export class RegistryService implements IRegistryService {
   /**
    * Fetch metadata for a specific component
    * @param name - Component name
-   * @returns Promise resolving to component metadata
+   * @param options - Optional parameters (version, includeFiles)
+   * @returns Promise resolving to component metadata (with files if includeFiles is true)
    * @throws ComponentNotFoundError if component doesn't exist
    * @throws NetworkError if fetch fails
    */
-  async fetchComponent(name: string): Promise<VelyxComponentMeta> {
+  async fetchComponent(
+    name: string,
+    options?: FetchComponentOptions,
+  ): Promise<VelyxComponentMeta | RegistryComponentWithFiles> {
+    const taskMessage = options?.includeFiles
+      ? `Fetching component "${name}" with files...`
+      : `Fetching component "${name}" metadata...`
+
     return await spinner.withTask(
-      `Fetching component "${name}" metadata...`,
-      () => this.velyxService.fetchComponent(name),
+      taskMessage,
+      () => this.velyxService.fetchComponent(name, options),
       undefined,
       `Failed to fetch component "${name}"`,
-    )
-  }
-
-  /**
-   * Fetch file content for a component
-   * @param componentUrl - Component URL or name
-   * @param path - File path within component
-   * @returns Promise resolving to file content
-   * @throws ComponentNotFoundError if component or file doesn't exist
-   * @throws NetworkError if fetch fails
-   */
-  async fetchFile(componentUrl: string, path: string): Promise<string> {
-    return await spinner.withTask(
-      `Downloading ${path}...`,
-      () => this.velyxService.fetchFile(componentUrl, path),
-      undefined,
-      `Failed to fetch file "${path}"`,
     )
   }
 
