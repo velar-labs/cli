@@ -80,6 +80,30 @@ resources/views/components/ui
 npx velyx list
 ```
 
+### Search for a component
+
+```bash
+npx velyx search
+```
+
+---
+
+## Installation
+
+Velyx can be used without installation via `npx`, but you can also install it globally for frequent use:
+
+```bash
+npm install -g velyx
+# or
+pnpm add -g velyx
+```
+
+For development releases (beta/next tags):
+
+```bash
+npx velyx@beta
+```
+
 ---
 
 ## How updates work
@@ -107,14 +131,24 @@ Velyx exists to help you move faster, not to take control away from you.
 
 ---
 
+## Configuration
+
+After running `velyx init`, a `velyx.json` file is created in your project root. This file stores your Velyx configuration and can be customized to your needs.
+
 ## Documentation
 
-Full documentation lives in the `docs` repository:
+Full documentation is available at [velyx.dev](https://velyx.dev):
 
 - Introduction
 - Getting started
 - Component reference
 - Project philosophy
+
+## Links
+
+- **Registry**: [registry.velyx.dev](https://registry.velyx.dev)
+- **Documentation**: [velyx.dev](https://velyx.dev)
+- **GitHub**: [github.com/velyx-labs/cli](https://github.com/velyx-labs/cli)
 
 ---
 
