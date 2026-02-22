@@ -46,7 +46,7 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,mdx}\" --cache",
     "format:write": "prettier --write \"**/*.{ts,tsx,mdx}\" --cache",
     "lint": "eslint",
-    "prepublishOnly": "pnpm run build",
+    "prepublishOnly": "pnpm run build:prod",
     "pub:beta": "pnpm build && pnpm publish --no-git-checks --access public --tag beta",
     "pub:next": "pnpm build && pnpm publish --no-git-checks --access public --tag next",
     "pub:release": "pnpm build && pnpm publish --access public",
