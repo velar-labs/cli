@@ -1,23 +1,25 @@
 import fs from 'fs'
-import type { VelarConfig } from '../types'
+import type { VelyxConfig } from '../types'
+import { logger } from './logger'
 
 /**
- * Write Velar configuration to velar.json file
+ * Write Velyx configuration to velyx.json file
  * @param config - Configuration object to write
  * @throws Error if file write fails
  */
-export function writeVelarConfig(config: VelarConfig): void {
-  fs.writeFileSync('velar.json', JSON.stringify(config, null, 2) + '\n', 'utf8')
+export function writeVelyxConfig(config: VelyxConfig): void {
+  fs.writeFileSync('velyx.json', JSON.stringify(config, null, 2) + '\n', 'utf8')
 }
 
 /**
- * Read Velar configuration from velar.json file
+ * Read Velyx configuration from velyx.json file
  * @returns Configuration object
  * @throws Error if file doesn't exist or is invalid
  */
-export function readVelarConfig(): VelarConfig {
-  if (!fs.existsSync('velar.json')) {
-    throw new Error('Velar configuration not found.')
+export function readVelyxConfig(): VelyxConfig {
+  if (!fs.existsSync('velyx.json')) {
+    logger.error('Velyx configuration not found.')
+    process.exit(1)
   }
-  return JSON.parse(fs.readFileSync('velar.json', 'utf8')) as VelarConfig
+  return JSON.parse(fs.readFileSync('velyx.json', 'utf8')) as VelyxConfig
 }

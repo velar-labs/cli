@@ -1,11 +1,9 @@
 import prompts from 'prompts'
-import path from 'path'
 import fsExtra from 'fs-extra'
 import type {
   AddResult,
   FailedComponent,
-  VelarComponentFile,
-  VelarComponentMeta,
+  VelyxComponentMeta,
 } from '@/src/types'
 import type {
   IConfigManager,
@@ -25,10 +23,20 @@ import {
 type PlannedFile = {
   componentName: string
   filePath: string
-  fileType: string
+  fileType: 'blade' | 'js' | 'css' | null
   destPath: string
   content: string
   existedBefore: boolean
+}
+
+/**
+ * Determine file type from file path
+ */
+function getFileTypeFromPath(filePath: string): 'blade' | 'js' | 'css' | null {
+  if (filePath.endsWith('.blade.php')) return 'blade'
+  if (filePath.endsWith('.js')) return 'js'
+  if (filePath.endsWith('.css')) return 'css'
+  return null
 }
 
 /**
@@ -106,19 +114,22 @@ export class ComponentService {
       failed: [],
     }
 
-    // Fetch component metadata
-    const component = await this.registryService.fetchComponent(componentName)
+    // Fetch component metadata with files
+    const component = await this.registryService.fetchComponent(
+      componentName,
+      { includeFiles: true },
+    )
 
-    // Resolve dependencies
-    const componentsToAdd =
-      await this.registryService.resolveDependencies(component)
+    // Resolve dependencies (fetch without files for dependencies)
+    await this.registryService.resolveDependencies(component)
 
     // Install component dependencies (npm/composer)
-    if (component.dependencies) {
+    const dependencies = this.buildDependencies(component)
+    if (dependencies) {
       const packageManager = this.configManager!.getPackageManager()
       try {
         await this.dependencyService.installDependencies(
-          component.dependencies,
+          dependencies,
           packageManager,
         )
       } catch (error) {
@@ -131,43 +142,37 @@ export class ComponentService {
       }
     }
 
-    // Get components path
-    const componentsPath = this.configManager!.getComponentsPath()
-
     const plannedFiles: PlannedFile[] = []
 
-    for (const comp of componentsToAdd) {
-      for (const file of comp.files) {
-        // Determine destination based on file type
-        const dest = this.getDestinationPath(comp, file, componentsPath)
+    // Fetch files for the main component with content
+    const componentWithFiles = await this.fetchComponentWithFiles(componentName)
+  
+    for (const [filePath, content] of Object.entries(componentWithFiles.files)) {
+      // Determine destination based on file type
+      const dest = this.getDestinationPath(filePath)
+      const fileType = getFileTypeFromPath(filePath)
 
-        // Check if file exists and handle conflict
-        const existedBefore = await this.fileSystem.fileExists(dest)
-        if (existedBefore) {
-          const action = await this.handleFileConflict(file.path)
-          if (action === 'skip') {
-            result.skipped.push(`${comp.name}/${file.path}`)
-            continue
-          } else if (action === 'cancel') {
-            logger.error('Cancelled.')
-            process.exit(0)
-          }
+      // Check if file exists and handle conflict
+      const existedBefore = await this.fileSystem.fileExists(dest)
+      if (existedBefore) {
+        const action = await this.handleFileConflict(filePath)
+        if (action === 'skip') {
+          result.skipped.push(`${componentName}/${filePath}`)
+          continue
+        } else if (action === 'cancel') {
+          logger.error('Cancelled.')
+          process.exit(0)
         }
-
-        const content = await this.registryService.fetchFile(
-          comp.name,
-          file.path,
-        )
-
-        plannedFiles.push({
-          componentName: comp.name,
-          filePath: file.path,
-          fileType: file.type,
-          destPath: dest,
-          content,
-          existedBefore,
-        })
       }
+
+      plannedFiles.push({
+        componentName,
+        filePath,
+        fileType,
+        destPath: dest,
+        content,
+        existedBefore,
+      })
     }
 
     if (plannedFiles.length > 0) {
@@ -199,6 +204,48 @@ export class ComponentService {
   }
 
   /**
+   * Build dependencies object from component metadata
+   */
+  private buildDependencies(component: VelyxComponentMeta): {
+    composer?: readonly string[]
+    npm?: readonly string[]
+  } | null {
+    const dependencies: {
+      composer?: string[]
+      npm?: string[]
+    } = {}
+
+    if (component.requires && component.requires.length > 0) {
+      dependencies.composer = [...component.requires]
+    }
+
+    if (component.requires_alpine) {
+      dependencies.npm = ['alpinejs']
+    }
+
+    return Object.keys(dependencies).length > 0 ? dependencies : null
+  }
+
+  /**
+   * Fetch component with files from registry
+   */
+  private async fetchComponentWithFiles(
+    componentName: string,
+  ): Promise<{ files: Record<string, string> }> {
+    const result = await this.registryService.fetchComponent(componentName, {
+      includeFiles: true,
+    })
+
+    // Check if the result has files (RegistryComponentWithFiles)
+    if ('files' in result) {
+      return result
+    }
+
+    // Fallback: if no files, return empty object
+    return { files: {} }
+  }
+
+  /**
    * Automatically import component JS into the main JS entry
    * @param componentName - Name of the component
    */
@@ -223,26 +270,20 @@ export class ComponentService {
 
   /**
    * Get the destination path for a component file
-   * @param component - Component metadata
-   * @param file - File metadata
-   * @param componentsPath - Base components path
+   * The API returns file paths in project structure format:
+   * - resources/views/components/ui/{name}/{name}.blade.php
+   * - resources/js/ui/{name}.js
+   * - resources/css/ui/{name}.css
+   *
+   * We preserve the API's structure for consistency
+   *
+   * @param filePath - File path from API
    * @returns Destination file path
    */
-  private getDestinationPath(
-    component: VelarComponentMeta,
-    file: VelarComponentFile,
-    componentsPath: string,
-  ): string {
-    switch (file.type) {
-      case 'blade':
-        return path.join(componentsPath, `${component.name}.blade.php`)
-      case 'js':
-        return path.join('resources/js/ui', `${component.name}.js`)
-      case 'css':
-        return path.join('resources/css/components', `${component.name}.css`)
-      default:
-        return path.join(componentsPath, file.path)
-    }
+  private getDestinationPath(filePath: string): string {
+    // The API already provides the correct path structure
+    // Just ensure it's relative to project root
+    return filePath
   }
 
   /**
@@ -282,7 +323,7 @@ export class ComponentService {
 
     try {
       for (const file of plannedFiles) {
-        const tempPath = `${file.destPath}.velar-tmp`
+        const tempPath = `${file.destPath}.velyx-tmp`
         await this.fileSystem.writeFile(tempPath, file.content)
         tempFiles.push(tempPath)
       }
@@ -300,7 +341,7 @@ export class ComponentService {
       }
 
       for (const file of plannedFiles) {
-        const tempPath = `${file.destPath}.velar-tmp`
+        const tempPath = `${file.destPath}.velyx-tmp`
         await fsExtra.move(tempPath, file.destPath, { overwrite: true })
       }
 

@@ -4,7 +4,7 @@ import { deleteFileBackup, restoreFileBackup } from '@/src/utils/file-helper'
 import { initOptionsSchema, initProject } from '@/src/utils/init-project'
 
 process.on('exit', (code) => {
-  const filePath = path.resolve(process.cwd(), 'velar.json')
+  const filePath = path.resolve(process.cwd(), 'velyx.json')
 
   // Delete backup if successful.
   if (code === 0) {
@@ -23,7 +23,7 @@ export const init = new Command()
     'the base color to use. (neutral, gray, zinc, stone, slate)',
     undefined,
   )
-  .option('-y, --yes', 'skip confirmation prompt.', true)
+  .option('-y, --yes', 'skip confirmation prompt.', false)
   .option('-d, --defaults', 'use default configuration.', false)
   .option('-f, --force', 'force overwrite of existing configuration.', false)
   .option(

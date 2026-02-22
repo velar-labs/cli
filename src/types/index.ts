@@ -1,7 +1,7 @@
 /**
- * Supported file types for Velar components
+ * Supported file types for Velyx components
  */
-export type VelarFileType = 'blade' | 'js' | 'css'
+export type VelyxFileType = 'blade' | 'js' | 'css'
 
 /**
  * Supported package managers
@@ -11,22 +11,24 @@ export type PackageManager = 'npm' | 'yarn' | 'pnpm' | 'bun'
 /**
  * Available color themes
  */
-export type VelarTheme = 'neutral' | 'gray' | 'slate' | 'stone' | 'zinc'
+export type VelyxTheme = 'neutral' | 'gray' | 'slate' | 'stone' | 'zinc'
 
 /**
- * Represents a file in a Velar component
+ * Represents a file in a Velyx component (with content)
  */
-export interface VelarComponentFile {
-  /** File type */
-  type: VelarFileType
+export interface VelyxComponentFile {
+  /** File type (blade, js, css) */
+  type: VelyxFileType
   /** Relative file path */
   path: string
+  /** File content */
+  content: string
 }
 
 /**
  * Component dependencies
  */
-export interface VelarDependency {
+export interface VelyxDependency {
   /** Composer (PHP) dependencies */
   composer?: readonly string[]
   /** npm/yarn/pnpm/bun dependencies */
@@ -34,47 +36,53 @@ export interface VelarDependency {
 }
 
 /**
- * Velar component metadata
+ * Velyx component metadata (from registry list endpoint)
  */
-export interface VelarComponentMeta {
+export interface VelyxComponentMeta {
   /** Unique component name */
   name: string
   /** Component description */
-  description?: string
+  description: string
+  /** Latest version available */
+  latest: string
+  /** All available versions */
+  versions: readonly string[]
   /** Component categories */
   categories?: readonly string[]
-  /** List of component files */
-  files: readonly VelarComponentFile[]
-  /** Component dependencies */
-  dependencies?: VelarDependency
-  /** Component path in registry */
-  path: string
+  /** Whether Alpine.js is required */
+  requires_alpine: boolean
+  /** Required Composer dependencies */
+  requires: readonly string[]
+  /** Laravel version requirement */
+  laravel?: string
 }
 
 /**
- * Velar registry data
+ * Velyx registry data
  */
 export interface RegistryData {
   /** List of available components */
-  components: readonly VelarComponentMeta[]
+  components: readonly VelyxComponentMeta[]
+  /** Total number of components */
+  count: number
 }
 
 /**
- * Velar configuration for a project
+ * Velyx configuration for a project
  */
-export interface VelarConfig {
+export interface VelyxConfig {
   /** Configuration version */
   version: string
   /** Selected color theme */
-  theme: VelarTheme
+  theme: VelyxTheme
   /** Package manager used */
   packageManager: PackageManager
   /** CSS configuration */
   css: {
     /** Main CSS file path */
     entry: string
-    /** Velar CSS file path */
-    velar: string
+    /** Velyx CSS file path */
+    velyx: string
   }
   /** JS configuration */
   js: {
@@ -85,36 +93,6 @@ export interface VelarConfig {
   components: {
     /** Path where components are stored */
     path: string
-  }
-}
-
-/**
- * GitHub API file representation
- */
-export interface GitHubFile {
-  /** File name */
-  name: string
-  /** Full file path */
-  path: string
-  /** File SHA */
-  sha: string
-  /** File size in bytes */
-  size: number
-  /** API URL */
-  url: string
-  /** HTML URL */
-  html_url: string
-  /** Git URL */
-  git_url: string
-  /** Direct download URL */
-  download_url: string | null
-  /** File type */
-  type: 'file' | 'dir'
-  /** Associated links */
-  _links: {
-    self: string
-    git: string
-    html: string
   }
 }
 
@@ -145,7 +123,7 @@ export interface AddResult {
  */
 export interface ComponentList {
   /** List of components */
-  components: readonly VelarComponentMeta[]
+  components: readonly VelyxComponentMeta[]
   /** List of available categories */
   categories: readonly string[]
 }
@@ -184,4 +162,59 @@ export interface FetchOptions extends RetryOptions {
   timeout?: number
   /** Custom headers */
   headers?: Record<string, string>
+}
+
+/**
+ * Velyx Registry API v1 component metadata (with files)
+ */
+export interface RegistryComponentWithFiles extends VelyxComponentMeta {
+  /** Component version (if specific version requested) */
+  version?: string
+  /** Component files with content mapped to project structure */
+  files: Record<string, string>
+}
+
+/**
+ * Registry API v1 components list response
+ */
+export interface RegistryComponentsResponse {
+  /** Component list data */
+  data: Record<string, VelyxComponentMeta>
+  /** Total number of components */
+  count: number
+}
+
+/**
+ * Registry API v1 versions response
+ */
+export interface RegistryVersionsResponse {
+  /** Component name */
+  name: string
+  /** Latest version */
+  latest: string
+  /** All available versions */
+  versions: readonly string[]
+}
+
+/**
+ * Registry API v1 component detail response
+ */
+export interface RegistryComponentResponse {
+  /** Component data */
+  data: RegistryComponentWithFiles
+}
+
+/**
+ * Registry API v1 versions list response
+ */
+export interface RegistryVersionsListResponse {
+  /** Versions data */
+  data: {
+    /** Component name */
+    name: string
+    /** Latest version */
+    latest: string
+    /** All available versions */
+    versions: readonly string[]
+  }
 }

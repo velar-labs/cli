@@ -1,6 +1,6 @@
 {
   "name": "velyx",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "CLI to add composable UI components to Laravel projects",
   "author": "",
   "license": "MIT",
@@ -29,17 +29,13 @@
   "publishConfig": {
     "access": "public"
   },
-  "packageManager": "pnpm@10.28.1+sha512.7d7dbbca9e99447b7c3bf7a73286afaaf6be99251eb9498baefa7d406892f67b879adb3a1d7e687fc4ccc1a388c7175fbaae567a26ab44d1067b54fcb0d6a316",
-  "pnpm": {
-    "overrides": {
-      "cli-spinners": "2.9.2"
-    }
-  },
+  "packageManager": "pnpm@10.30.1+sha512.3590e550d5384caa39bd5c7c739f72270234b2f6059e13018f975c313b1eb9fefcc09714048765d4d9efe961382c312e624572c0420762bdc5d5940cdf9be73a",
   "scripts": {
-    "build": "tsup",
+    "build:dev": "cross-env NODE_ENV=development VELYX_REGISTRY_URL=http://velyx.test/api/v1 tsup",
+    "build": "cross-env NODE_ENV=production VELYX_REGISTRY_URL=https://registry.velyx.dev/api/v1 tsup",
     "check:ci": "pnpm run lint && pnpm run typecheck",
     "clean": "rimraf dist",
-    "dev": "tsup --watch",
+    "dev": "cross-env NODE_ENV=development VELYX_REGISTRY_URL=http://velyx.test/api/v1 tsup --watch",
     "check": "pnpm run format:write && eslint --fix",
     "format:check": "prettier --check \"**/*.{ts,tsx,mdx}\" --cache",
     "format:write": "prettier --write \"**/*.{ts,tsx,mdx}\" --cache",
@@ -50,6 +46,7 @@
     "pub:release": "pnpm build && pnpm publish --access public",
     "release": "changeset version",
     "start": "node dist/index.js",
+    "start:dev": "cross-env NODE_ENV=development VELYX_REGISTRY_URL=http://velyx.test/api/v1 node dist/index.js",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
@@ -58,7 +55,6 @@
   "dependencies": {
     "@clack/prompts": "^0.11.0",
     "chalk": "^5.6.2",
-    "changeset": "^0.2.6",
     "cli-table3": "^0.6.5",
     "commander": "^14.0.2",
     "fs-extra": "^11.3.3",
@@ -66,11 +62,13 @@
     "log-symbols": "^7.0.1",
     "ora": "^9.1.0",
     "prompts": "^2.4.2",
+    "velyx": "link:../../../../.local/share/pnpm/global/5/node_modules/velyx",
     "vite-tsconfig-paths": "^6.0.5",
     "zod": "^3.24.1",
     "zod-to-json-schema": "^3.24.6"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.29.8",
     "@eslint/js": "^9.39.2",
     "@eslint/json": "^0.14.0",
     "@eslint/markdown": "^7.5.1",
@@ -78,6 +76,7 @@
     "@types/node": "^25.0.9",
     "@types/prompts": "^2.4.9",
     "@vitest/coverage-v8": "^4.0.18",
+    "cross-env": "^10.1.0",
     "eslint": "^9.39.2",
     "globals": "^17.0.0",
     "jiti": "^2.6.1",

@@ -1,38 +1,40 @@
-import type { GitHubFile, RegistryData, VelarComponentMeta } from '../types'
-import type { IRegistryService } from '../types/interfaces'
-import {
-  fetchComponent,
-  fetchComponentFile,
-  fetchGitHubRegistry,
-} from '../utils/remote-registry'
-
-import { HttpService } from './http-service'
-
+import type {
+  VelyxComponentMeta,
+  RegistryComponentWithFiles,
+} from '../types'
+import type {
+  IRegistryService,
+  FetchComponentOptions,
+} from '../types/interfaces'
+import { VelyxRegistryService } from './velyx-registry-service'
 import { spinner } from '../utils/spinner'
 
 /**
- * Service for interacting with the Velar component registry
+ * Service for interacting with Velyx component registry
+ * This is a wrapper around VelyxRegistryService with UI feedback
  */
 export class RegistryService implements IRegistryService {
-  private readonly httpService: HttpService
+  private readonly velyxService: VelyxRegistryService
 
   /**
    * Create a new RegistryService instance
-   * @param httpService - Optional HTTP service instance (creates new one if not provided)
    */
-  constructor(httpService?: HttpService) {
-    this.httpService = httpService ?? new HttpService()
+  constructor() {
+    this.velyxService = new VelyxRegistryService()
   }
 
   /**
-   * Fetch the complete registry data
+   * Fetch complete registry data
    * @returns Promise resolving to registry data
    * @throws NetworkError if fetch fails
    */
-  async fetchRegistry(): Promise<RegistryData> {
+  async fetchRegistry(): Promise<{
+    components: readonly VelyxComponentMeta[]
+    count: number
+  }> {
     return await spinner.withTask(
       'Fetching registry...',
-      () => fetchGitHubRegistry(),
+      () => this.velyxService.fetchRegistry(),
       undefined,
       'Failed to fetch registry',
     )
@@ -41,35 +43,24 @@ export class RegistryService implements IRegistryService {
   /**
    * Fetch metadata for a specific component
    * @param name - Component name
-   * @returns Promise resolving to component metadata
+   * @param options - Optional parameters (version, includeFiles)
+   * @returns Promise resolving to component metadata (with files if includeFiles is true)
    * @throws ComponentNotFoundError if component doesn't exist
    * @throws NetworkError if fetch fails
    */
-  async fetchComponent(name: string): Promise<VelarComponentMeta> {
-    const file = await spinner.withTask(
-      `Fetching component "${name}" metadata...`,
-      () => fetchComponent(name),
+  async fetchComponent(
+    name: string,
+    options?: FetchComponentOptions,
+  ): Promise<VelyxComponentMeta | RegistryComponentWithFiles> {
+    const taskMessage = options?.includeFiles
+      ? `Fetching component "${name}" with files...`
+      : `Fetching component "${name}" metadata...`
+
+    return await spinner.withTask(
+      taskMessage,
+      () => this.velyxService.fetchComponent(name, options),
       undefined,
       `Failed to fetch component "${name}"`,
-    )
-    return await this.parseComponentMeta(file)
-  }
-
-  /**
-   * Fetch file content for a component
-   * @param componentUrl - Component URL or name
-   * @param path - File path within component
-   * @returns Promise resolving to file content
-   * @throws ComponentNotFoundError if component or file doesn't exist
-   * @throws NetworkError if fetch fails
-   */
-  async fetchFile(componentUrl: string, path: string): Promise<string> {
-    const componentName = componentUrl.split('/').pop() || componentUrl
-    return await spinner.withTask(
-      `Downloading ${path}...`,
-      () => fetchComponentFile(componentName, path),
-      undefined,
-      `Failed to fetch file "${path}"`,
     )
   }
 
@@ -79,44 +70,13 @@ export class RegistryService implements IRegistryService {
    * @returns Promise resolving to array of components including dependencies
    */
   async resolveDependencies(
-    component: VelarComponentMeta,
-  ): Promise<readonly VelarComponentMeta[]> {
-    const visited = new Set<string>()
-    const resolved: VelarComponentMeta[] = []
-
-    const resolve = async (comp: VelarComponentMeta) => {
-      if (visited.has(comp.name)) return
-      visited.add(comp.name)
-      resolved.push(comp)
-
-      // Component dependencies would be resolved here if they exist
-      // For now, just add the component itself
-    }
-
-    await resolve(component)
-    return resolved
-  }
-
-  /**
-   * Parse component metadata from GitHub file
-   * @param file - GitHub file metadata
-   * @returns Promise resolving to component metadata
-   * @throws NetworkError if download or parsing fails
-   */
-  private async parseComponentMeta(
-    file: GitHubFile,
-  ): Promise<VelarComponentMeta> {
-    if (!file.download_url) {
-      throw new Error('GitHub file has no download URL')
-    }
-
-    try {
-      const raw = await this.httpService.fetchText(file.download_url)
-      return JSON.parse(raw) as VelarComponentMeta
-    } catch (error) {
-      throw new Error(
-        `Failed to parse component meta: ${(error as Error).message}`,
-      )
-    }
+    component: VelyxComponentMeta,
+  ): Promise<readonly VelyxComponentMeta[]> {
+    return await spinner.withTask(
+      'Resolving dependencies...',
+      () => this.velyxService.resolveDependencies(component),
+      undefined,
+      'Failed to resolve dependencies',
+    )
   }
 }
