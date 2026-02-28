@@ -144,6 +144,10 @@ Full documentation is available at [velyx.dev](https://velyx.dev):
 - Component reference
 - Project philosophy
 
+Technical documentation for testing architecture:
+
+- [docs/TESTING.md](docs/TESTING.md)
+
 ## Links
 
 - **Registry**: [registry.velyx.dev](https://registry.velyx.dev)
