@@ -1,4 +1,5 @@
 import { exec } from 'child_process'
+import { readFileSync } from 'fs'
 import { promisify } from 'util'
 import type { PackageManager, VelyxDependency } from '@/src/types'
 import type { IDependencyService } from '@/src/types/interfaces'
@@ -7,20 +8,77 @@ import { FilesystemService } from './filesystem-service'
 
 const execAsync = promisify(exec)
 
-/**
- * Convert npm-style dependency string to Composer format
- * @param dep - Dependency string in npm format (e.g., "vendor/package@1.0.0")
- * @returns Dependency string in Composer format (e.g., "vendor/package:1.0.0")
- */
-function convertNpmToComposerFormat(dep: string): string {
-  // Replace @ with : for version constraint
-  // But only if it's not a scoped package (starting with @)
+type DependencySpec = {
+  name: string
+  version: string | null
+}
+
+type PackageJsonManifest = {
+  dependencies?: Record<string, string>
+  devDependencies?: Record<string, string>
+}
+
+type ComposerJsonManifest = {
+  require?: Record<string, string>
+  'require-dev'?: Record<string, string>
+}
+
+function parseNpmDependency(dep: string): DependencySpec {
   if (dep.startsWith('@')) {
-    // Scoped npm package like @alpinejs/alpinejs - return as-is for npm
-    return dep
+    const separatorIndex = dep.lastIndexOf('@')
+    if (separatorIndex > dep.indexOf('/')) {
+      return {
+        name: dep.slice(0, separatorIndex),
+        version: dep.slice(separatorIndex + 1),
+      }
+    }
+
+    return { name: dep, version: null }
   }
-  // Replace @ with : for Composer packages
-  return dep.replace('@', ':')
+
+  const separatorIndex = dep.lastIndexOf('@')
+
+  if (separatorIndex > 0) {
+    return {
+      name: dep.slice(0, separatorIndex),
+      version: dep.slice(separatorIndex + 1),
+    }
+  }
+
+  return { name: dep, version: null }
+}
+
+function parseComposerDependency(dep: string): DependencySpec {
+  const colonIndex = dep.indexOf(':')
+  if (colonIndex > 0) {
+    return {
+      name: dep.slice(0, colonIndex),
+      version: dep.slice(colonIndex + 1),
+    }
+  }
+
+  const atIndex = dep.lastIndexOf('@')
+  if (atIndex > 0) {
+    return {
+      name: dep.slice(0, atIndex),
+      version: dep.slice(atIndex + 1),
+    }
+  }
+
+  return { name: dep, version: null }
+}
+
+function toComposerInstallSpec(dep: string): string {
+  const parsed = parseComposerDependency(dep)
+  return parsed.version ? `${parsed.name}:${parsed.version}` : parsed.name
+}
+
+function readJsonFile<T>(filePath: string): T | null {
+  try {
+    return JSON.parse(readFileSync(filePath, 'utf8')) as T
+  } catch {
+    return null
+  }
 }
 
 /**
@@ -46,21 +104,18 @@ export class DependencyService implements IDependencyService {
     const npmPromises = []
     const composerPromises = []
 
-    // Install npm dependencies
     if (dependencies.npm && dependencies.npm.length > 0) {
       npmPromises.push(
         this.installNpmDependencies(dependencies.npm, packageManager),
       )
     }
 
-    // Install composer dependencies
     if (dependencies.composer && dependencies.composer.length > 0) {
       composerPromises.push(
         this.installComposerDependencies(dependencies.composer),
       )
     }
 
-    // Execute installations in parallel
     await Promise.allSettled([...npmPromises, ...composerPromises])
   }
 
@@ -74,7 +129,7 @@ export class DependencyService implements IDependencyService {
     dependencies: readonly string[],
     packageManager: PackageManager,
   ): Promise<void> {
-    if (!this.fileSystem.fileExists('package.json')) {
+    if (!(await this.fileSystem.fileExists('package.json'))) {
       logger.warn('No package.json found, skipping npm dependencies')
       return
     }
@@ -93,7 +148,7 @@ export class DependencyService implements IDependencyService {
 
       const { stdout, stderr } = await execAsync(command, {
         cwd: process.cwd(),
-        timeout: 120000, // 2 minutes timeout
+        timeout: 120000,
       })
 
       if (stdout && process.env.NODE_ENV !== 'test') {
@@ -121,30 +176,28 @@ export class DependencyService implements IDependencyService {
   async installComposerDependencies(
     dependencies: readonly string[],
   ): Promise<void> {
-    if (!this.fileSystem.fileExists('composer.json')) {
+    if (!(await this.fileSystem.fileExists('composer.json'))) {
       logger.warn('No composer.json found, skipping composer dependencies')
       return
     }
 
-    // Convert npm format (@) to Composer format (:) if needed
-    const convertedDeps = dependencies.map(convertNpmToComposerFormat)
-
-    const missingDeps =
-      await this.filterMissingComposerDependencies(convertedDeps)
+    const missingDeps = await this.filterMissingComposerDependencies(dependencies)
 
     if (missingDeps.length === 0) {
       logger.info('All composer dependencies already installed')
       return
     }
 
+    const installSpecs = missingDeps.map(toComposerInstallSpec)
+
     try {
-      logger.info(`Installing composer dependencies: ${missingDeps.join(', ')}`)
+      logger.info(`Installing composer dependencies: ${installSpecs.join(', ')}`)
 
       const { stdout, stderr } = await execAsync(
-        `composer require ${missingDeps.join(' ')}`,
+        `composer require ${installSpecs.join(' ')}`,
         {
           cwd: process.cwd(),
-          timeout: 300000, // 5 minutes timeout for composer
+          timeout: 300000,
         },
       )
 
@@ -165,12 +218,6 @@ export class DependencyService implements IDependencyService {
     }
   }
 
-  /**
-   * Get the appropriate npm install command based on package manager
-   * @param packageManager - Package manager to use
-   * @param dependencies - Dependencies array
-   * @returns Command string
-   */
   private getNpmInstallCommand(
     packageManager: PackageManager,
     dependencies: readonly string[],
@@ -188,65 +235,63 @@ export class DependencyService implements IDependencyService {
     }
   }
 
-  /**
-   * Filter out npm dependencies that are already installed
-   * @param dependencies - Dependencies to check
-   * @returns Array of missing dependencies
-   */
   private async filterMissingNpmDependencies(
     dependencies: readonly string[],
   ): Promise<string[]> {
-    try {
-      const { stdout } = await execAsync('npm list --json --depth=0', {
-        cwd: process.cwd(),
-        timeout: 30000,
-      })
+    const manifest = readJsonFile<PackageJsonManifest>('package.json')
 
-      const installed = JSON.parse(stdout) as Record<string, any>
-      const installedDeps = Object.keys({
-        ...installed.dependencies,
-        ...installed.devDependencies,
-      })
-
-      return dependencies.filter((dep) => {
-        const name = dep.split('@')[0]
-        return !installedDeps.includes(name)
-      })
-    } catch {
-      // If we can't check, assume all need to be installed
-      return dependencies as string[]
+    if (!manifest) {
+      return [...dependencies]
     }
+
+    const installedDeps = {
+      ...manifest.dependencies,
+      ...manifest.devDependencies,
+    }
+
+    return dependencies.filter((dep) => {
+      const parsed = parseNpmDependency(dep)
+      const installedVersion = installedDeps[parsed.name]
+
+      if (!installedVersion) {
+        return true
+      }
+
+      if (!parsed.version) {
+        return false
+      }
+
+      return installedVersion !== parsed.version
+    })
   }
 
-  /**
-   * Filter out composer dependencies that are already installed
-   * @param dependencies - Dependencies to check
-   * @returns Array of missing dependencies
-   */
   private async filterMissingComposerDependencies(
     dependencies: readonly string[],
   ): Promise<string[]> {
-    try {
-      const { stdout } = await execAsync(
-        'composer show --installed --format=json',
-        {
-          cwd: process.cwd(),
-          timeout: 30000,
-        },
-      )
+    const manifest = readJsonFile<ComposerJsonManifest>('composer.json')
 
-      const installed = JSON.parse(stdout) as {
-        installed: Array<{ name: string }>
-      }
-      const installedDeps = installed.installed.map((pkg) => pkg.name)
-
-      return dependencies.filter((dep) => {
-        const name = dep.split(':')[0]
-        return !installedDeps.includes(name)
-      })
-    } catch {
-      // If we can't check, assume all need to be installed
-      return dependencies as string[]
+    if (!manifest) {
+      return [...dependencies]
     }
+
+    const installedDeps = {
+      ...manifest.require,
+      ...manifest['require-dev'],
+    }
+
+    return dependencies.filter((dep) => {
+      const parsed = parseComposerDependency(dep)
+      const installedVersion = installedDeps[parsed.name]
+
+      if (!installedVersion) {
+        return true
+      }
+
+      if (!parsed.version) {
+        return false
+      }
+
+      return installedVersion !== parsed.version
+    })
   }
 }

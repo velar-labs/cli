@@ -49,9 +49,13 @@ describe('CLI add E2E', () => {
       const projectPath = await createTempProjectFromFixture('laravel-minimal')
       projectPaths.push(projectPath)
 
-      await fs.writeJson(path.join(projectPath, 'velyx.json'), projectConfig(), {
-        spaces: 2,
-      })
+      await fs.writeJson(
+        path.join(projectPath, 'velyx.json'),
+        projectConfig(),
+        {
+          spaces: 2,
+        },
+      )
 
       let server: Awaited<ReturnType<typeof startMockRegistryServer>>
       try {
@@ -67,9 +71,13 @@ describe('CLI add E2E', () => {
       }
       serverStops.push(server.stop)
 
-      const result = runCli(['add', 'button', '--cwd', projectPath], projectPath, {
-        VELYX_REGISTRY_URL: `${server.url}/api/v1`,
-      })
+      const result = runCli(
+        ['add', 'button', '--cwd', projectPath],
+        projectPath,
+        {
+          VELYX_REGISTRY_URL: `${server.url}/api/v1`,
+        },
+      )
 
       expect(result.status).toBe(0)
 
@@ -77,7 +85,10 @@ describe('CLI add E2E', () => {
         projectPath,
         'resources/views/components/ui/button/index.blade.php',
       )
-      const jsComponentPath = path.join(projectPath, 'resources/js/ui/button.js')
+      const jsComponentPath = path.join(
+        projectPath,
+        'resources/js/ui/button.js',
+      )
       const jsEntryPath = path.join(projectPath, 'resources/js/app.js')
 
       expect(await fs.pathExists(bladePath)).toBe(true)
@@ -95,9 +106,13 @@ describe('CLI add E2E', () => {
       const projectPath = await createTempProjectFromFixture('laravel-minimal')
       projectPaths.push(projectPath)
 
-      await fs.writeJson(path.join(projectPath, 'velyx.json'), projectConfig(), {
-        spaces: 2,
-      })
+      await fs.writeJson(
+        path.join(projectPath, 'velyx.json'),
+        projectConfig(),
+        {
+          spaces: 2,
+        },
+      )
 
       let server: Awaited<ReturnType<typeof startMockRegistryServer>>
       try {
@@ -134,7 +149,9 @@ describe('CLI add E2E', () => {
         'utf8',
       )
 
-      expect(entryContent).toContain("import rangeSlider from './ui/range-slider'")
+      expect(entryContent).toContain(
+        "import rangeSlider from './ui/range-slider'",
+      )
       expect(entryContent).toContain("Alpine.data('rangeSlider', rangeSlider);")
     },
   )
@@ -145,9 +162,13 @@ describe('CLI add E2E', () => {
       const projectPath = await createTempProjectFromFixture('laravel-minimal')
       projectPaths.push(projectPath)
 
-      await fs.writeJson(path.join(projectPath, 'velyx.json'), projectConfig(), {
-        spaces: 2,
-      })
+      await fs.writeJson(
+        path.join(projectPath, 'velyx.json'),
+        projectConfig(),
+        {
+          spaces: 2,
+        },
+      )
 
       let server: Awaited<ReturnType<typeof startMockRegistryServer>>
       try {
@@ -163,29 +184,45 @@ describe('CLI add E2E', () => {
       }
       serverStops.push(server.stop)
 
-      const result = runCli(['add', 'tabs', '--cwd', projectPath], projectPath, {
-        VELYX_REGISTRY_URL: `${server.url}/api/v1`,
-      })
+      const result = runCli(
+        ['add', 'tabs', '--cwd', projectPath],
+        projectPath,
+        {
+          VELYX_REGISTRY_URL: `${server.url}/api/v1`,
+        },
+      )
 
       expect(result.status).toBe(0)
       expect(
         await fs.pathExists(
-          path.join(projectPath, 'resources/views/components/ui/tabs/index.blade.php'),
+          path.join(
+            projectPath,
+            'resources/views/components/ui/tabs/index.blade.php',
+          ),
         ),
       ).toBe(true)
       expect(
         await fs.pathExists(
-          path.join(projectPath, 'resources/views/components/ui/tabs/list.blade.php'),
+          path.join(
+            projectPath,
+            'resources/views/components/ui/tabs/list.blade.php',
+          ),
         ),
       ).toBe(true)
       expect(
         await fs.pathExists(
-          path.join(projectPath, 'resources/views/components/ui/tabs/content.blade.php'),
+          path.join(
+            projectPath,
+            'resources/views/components/ui/tabs/content.blade.php',
+          ),
         ),
       ).toBe(true)
       expect(
         await fs.pathExists(
-          path.join(projectPath, 'resources/views/components/ui/tabs/trigger.blade.php'),
+          path.join(
+            projectPath,
+            'resources/views/components/ui/tabs/trigger.blade.php',
+          ),
         ),
       ).toBe(true)
 
@@ -205,10 +242,15 @@ describe('CLI add E2E', () => {
       const projectPath = await createTempProjectFromFixture('laravel-minimal')
       projectPaths.push(projectPath)
 
-      const result = runCli(['add', 'button', '--cwd', projectPath], projectPath)
+      const result = runCli(
+        ['add', 'button', '--cwd', projectPath],
+        projectPath,
+      )
 
       expect(result.status).toBe(1)
-      expect(await fs.pathExists(path.join(projectPath, 'velyx.json'))).toBe(false)
+      expect(await fs.pathExists(path.join(projectPath, 'velyx.json'))).toBe(
+        false,
+      )
     },
   )
 })

@@ -65,9 +65,13 @@ describe('CLI list E2E', () => {
       }
       serverStops.push(server.stop)
 
-      const result = runCli(['list', '--json', '--cwd', projectPath], projectPath, {
-        VELYX_REGISTRY_URL: `${server.url}/api/v1`,
-      })
+      const result = runCli(
+        ['list', '--json', '--cwd', projectPath],
+        projectPath,
+        {
+          VELYX_REGISTRY_URL: `${server.url}/api/v1`,
+        },
+      )
       const output = `${result.stdout}\n${result.stderr}`
 
       expect(result.status).toBe(0)

@@ -181,18 +181,8 @@ export class VelyxRegistryService implements IRegistryService {
       visited.add(comp.name)
       resolved.push(comp)
 
-      // Resolve dependencies from the 'requires' field
-      if (comp.requires && comp.requires.length > 0) {
-        for (const dep of comp.requires) {
-          try {
-            // Try to fetch dependency as a Velyx component
-            const depComponent = await this.fetchComponent(dep)
-            await resolve(depComponent)
-          } catch {
-            // Skip if dependency is not a Velyx component (might be a composer package)
-          }
-        }
-      }
+      // The registry currently exposes package dependencies only (composer/npm).
+      // Component-to-component dependencies are resolved elsewhere when the API supports them.
     }
 
     await resolve(component)

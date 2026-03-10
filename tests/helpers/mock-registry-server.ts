@@ -7,7 +7,7 @@ const BUTTON_COMPONENT = {
   versions: ['1.0.0'],
   categories: ['forms'],
   requires_alpine: false,
-  requires: [],
+  requires: { composer: [], npm: [] },
   laravel: '^11 || ^12',
 }
 
@@ -18,7 +18,7 @@ const RANGE_SLIDER_COMPONENT = {
   versions: ['1.0.0'],
   categories: ['forms'],
   requires_alpine: false,
-  requires: [],
+  requires: { composer: [], npm: [] },
   laravel: '^11 || ^12',
 }
 
@@ -29,7 +29,7 @@ const TABS_COMPONENT = {
   versions: ['1.0.0'],
   categories: ['navigation'],
   requires_alpine: false,
-  requires: [],
+  requires: { composer: [], npm: [] },
   laravel: '^11 || ^12',
 }
 
@@ -89,7 +89,9 @@ export async function startMockRegistryServer(): Promise<{
 
     const match = requestUrl.pathname.match(/^\/api\/v1\/components\/([^/]+)$/)
     if (match) {
-      const componentName = decodeURIComponent(match[1] ?? '') as keyof typeof COMPONENTS
+      const componentName = decodeURIComponent(
+        match[1] ?? '',
+      ) as keyof typeof COMPONENTS
       const component = COMPONENTS[componentName]
 
       if (!component) {

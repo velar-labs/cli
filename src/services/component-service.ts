@@ -214,26 +214,23 @@ export class ComponentService {
       npm?: string[]
     } = {}
 
-    if (
-      component.requires &&
-      component.requires.composer &&
-      component.requires.composer.length > 0
-    ) {
-      dependencies.composer = [...component.requires.composer]
+    if (component.requires?.composer?.length) {
+      dependencies.composer = [...new Set(component.requires.composer)]
     }
 
-    if (component.requires_alpine) {
-      dependencies.npm = ['alpinejs']
-    }
+    const npmDependencies = component.requires?.npm
+      ? [...component.requires.npm]
+      : []
 
     if (
-      component.requires &&
-      component.requires.npm &&
-      component.requires.npm.length > 0
+      component.requires_alpine &&
+      !npmDependencies.some((dep) => dep === 'alpinejs' || dep.startsWith('alpinejs@'))
     ) {
-      dependencies.npm = dependencies.npm
-        ? [...dependencies.npm, ...component.requires.npm]
-        : [...component.requires.npm]
+      npmDependencies.unshift('alpinejs')
+    }
+
+    if (npmDependencies.length > 0) {
+      dependencies.npm = [...new Set(npmDependencies)]
     }
 
     return Object.keys(dependencies).length > 0 ? dependencies : null

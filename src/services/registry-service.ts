@@ -1,7 +1,4 @@
-import type {
-  VelyxComponentMeta,
-  RegistryComponentWithFiles,
-} from '../types'
+import type { VelyxComponentMeta, RegistryComponentWithFiles } from '../types'
 import type {
   IRegistryService,
   FetchComponentOptions,

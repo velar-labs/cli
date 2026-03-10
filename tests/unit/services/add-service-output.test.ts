@@ -9,9 +9,13 @@ import type {
 
 describe('AddService output', () => {
   it('logs added, skipped and failed items in displayResults', () => {
-    const successSpy = vi.spyOn(logger, 'success').mockImplementation(() => undefined)
+    const successSpy = vi
+      .spyOn(logger, 'success')
+      .mockImplementation(() => undefined)
     const warnSpy = vi.spyOn(logger, 'warn').mockImplementation(() => undefined)
-    const errorSpy = vi.spyOn(logger, 'error').mockImplementation(() => undefined)
+    const errorSpy = vi
+      .spyOn(logger, 'error')
+      .mockImplementation(() => undefined)
 
     const registryService = {
       fetchRegistry: vi.fn(),
@@ -40,7 +44,12 @@ describe('AddService output', () => {
     const result: AddResult = {
       added: ['resources/views/components/ui/button/index.blade.php'],
       skipped: ['resources/js/ui/card.js'],
-      failed: [{ name: 'resources/views/components/ui/badge/index.blade.php', error: 'network error' }],
+      failed: [
+        {
+          name: 'resources/views/components/ui/badge/index.blade.php',
+          error: 'network error',
+        },
+      ],
     }
 
     service.displayResults(result)
@@ -84,7 +93,11 @@ describe('AddService output', () => {
     service.displayNextSteps({ added: [], skipped: [], failed: [] })
     expect(logSpy).not.toHaveBeenCalled()
 
-    service.displayNextSteps({ added: ['button/file'], skipped: [], failed: [] })
+    service.displayNextSteps({
+      added: ['button/file'],
+      skipped: [],
+      failed: [],
+    })
     expect(logSpy).toHaveBeenCalledTimes(1)
   })
 })

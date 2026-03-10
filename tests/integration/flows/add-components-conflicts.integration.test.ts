@@ -27,7 +27,7 @@ const buttonMeta: VelyxComponentMeta = {
   versions: ['1.0.0'],
   categories: ['forms'],
   requires_alpine: false,
-  requires: [],
+  requires: { composer: [], npm: [] },
   laravel: '^11 || ^12',
 }
 
@@ -84,9 +84,10 @@ describe('addComponents conflicts integration', () => {
     vi.spyOn(RegistryService.prototype, 'fetchComponent').mockResolvedValue(
       buttonWithFiles,
     )
-    vi.spyOn(RegistryService.prototype, 'resolveDependencies').mockResolvedValue(
-      [buttonMeta],
-    )
+    vi.spyOn(
+      RegistryService.prototype,
+      'resolveDependencies',
+    ).mockResolvedValue([buttonMeta])
     mockedPrompts.mockResolvedValueOnce({ action: 'skip' })
 
     const projectPath = await createTempProjectFromFixture('laravel-minimal')
@@ -119,9 +120,10 @@ describe('addComponents conflicts integration', () => {
     vi.spyOn(RegistryService.prototype, 'fetchComponent').mockResolvedValue(
       buttonWithFiles,
     )
-    vi.spyOn(RegistryService.prototype, 'resolveDependencies').mockResolvedValue(
-      [buttonMeta],
-    )
+    vi.spyOn(
+      RegistryService.prototype,
+      'resolveDependencies',
+    ).mockResolvedValue([buttonMeta])
     mockedPrompts.mockResolvedValueOnce({ action: 'overwrite' })
 
     const projectPath = await createTempProjectFromFixture('laravel-minimal')

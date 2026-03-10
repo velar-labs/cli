@@ -19,7 +19,7 @@ const buttonMeta: VelyxComponentMeta = {
   versions: ['1.0.0'],
   categories: ['forms'],
   requires_alpine: false,
-  requires: [],
+  requires: { composer: [], npm: [] },
   laravel: '^11 || ^12',
 }
 
@@ -39,7 +39,7 @@ const rangeSliderMeta: VelyxComponentMeta = {
   versions: ['1.0.0'],
   categories: ['forms'],
   requires_alpine: false,
-  requires: [],
+  requires: { composer: [], npm: [] },
   laravel: '^11 || ^12',
 }
 
@@ -59,7 +59,7 @@ const tabsMeta: VelyxComponentMeta = {
   versions: ['1.0.0'],
   categories: ['navigation'],
   requires_alpine: false,
-  requires: [],
+  requires: { composer: [], npm: [] },
   laravel: '^11 || ^12',
 }
 
@@ -101,9 +101,10 @@ describe('addComponents integration', () => {
     vi.spyOn(RegistryService.prototype, 'fetchComponent').mockResolvedValue(
       buttonWithFiles,
     )
-    vi.spyOn(RegistryService.prototype, 'resolveDependencies').mockResolvedValue(
-      [buttonMeta],
-    )
+    vi.spyOn(
+      RegistryService.prototype,
+      'resolveDependencies',
+    ).mockResolvedValue([buttonMeta])
 
     const projectPath = await createTempProjectFromFixture('laravel-minimal')
     projectPaths.push(projectPath)
@@ -149,7 +150,6 @@ describe('addComponents integration', () => {
     expect(entryContent).toContain("Alpine.data('button', button);")
   })
 
-
   it('writes nested blade component files with index.blade.php for the root component', async () => {
     vi.spyOn(console, 'log').mockImplementation(() => undefined)
 
@@ -160,9 +160,10 @@ describe('addComponents integration', () => {
     vi.spyOn(RegistryService.prototype, 'fetchComponent').mockResolvedValue(
       tabsWithFiles,
     )
-    vi.spyOn(RegistryService.prototype, 'resolveDependencies').mockResolvedValue(
-      [tabsMeta],
-    )
+    vi.spyOn(
+      RegistryService.prototype,
+      'resolveDependencies',
+    ).mockResolvedValue([tabsMeta])
 
     const projectPath = await createTempProjectFromFixture('laravel-minimal')
     projectPaths.push(projectPath)
@@ -195,22 +196,34 @@ describe('addComponents integration', () => {
 
     expect(
       await fs.pathExists(
-        path.join(projectPath, 'resources/views/components/ui/tabs/index.blade.php'),
+        path.join(
+          projectPath,
+          'resources/views/components/ui/tabs/index.blade.php',
+        ),
       ),
     ).toBe(true)
     expect(
       await fs.pathExists(
-        path.join(projectPath, 'resources/views/components/ui/tabs/list.blade.php'),
+        path.join(
+          projectPath,
+          'resources/views/components/ui/tabs/list.blade.php',
+        ),
       ),
     ).toBe(true)
     expect(
       await fs.pathExists(
-        path.join(projectPath, 'resources/views/components/ui/tabs/content.blade.php'),
+        path.join(
+          projectPath,
+          'resources/views/components/ui/tabs/content.blade.php',
+        ),
       ),
     ).toBe(true)
     expect(
       await fs.pathExists(
-        path.join(projectPath, 'resources/views/components/ui/tabs/trigger.blade.php'),
+        path.join(
+          projectPath,
+          'resources/views/components/ui/tabs/trigger.blade.php',
+        ),
       ),
     ).toBe(true)
 
@@ -233,9 +246,10 @@ describe('addComponents integration', () => {
     vi.spyOn(RegistryService.prototype, 'fetchComponent').mockResolvedValue(
       rangeSliderWithFiles,
     )
-    vi.spyOn(RegistryService.prototype, 'resolveDependencies').mockResolvedValue(
-      [rangeSliderMeta],
-    )
+    vi.spyOn(
+      RegistryService.prototype,
+      'resolveDependencies',
+    ).mockResolvedValue([rangeSliderMeta])
 
     const projectPath = await createTempProjectFromFixture('laravel-minimal')
     projectPaths.push(projectPath)
@@ -271,7 +285,9 @@ describe('addComponents integration', () => {
       'utf8',
     )
 
-    expect(entryContent).toContain("import rangeSlider from './ui/range-slider'")
+    expect(entryContent).toContain(
+      "import rangeSlider from './ui/range-slider'",
+    )
     expect(entryContent).toContain("Alpine.data('rangeSlider', rangeSlider);")
   })
 })
