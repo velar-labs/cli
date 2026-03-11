@@ -7,14 +7,8 @@ import prompts from 'prompts'
 
 export type AddOptions = {
   components?: string[]
-  yes: boolean
-  overwrite: boolean
   cwd: string
   all: boolean
-  path?: string
-  silent: boolean
-  srcDir?: boolean
-  cssVariables?: boolean
 }
 
 async function promptForRegistryComponents(
@@ -60,6 +54,8 @@ async function promptForRegistryComponents(
 }
 
 export async function addComponents(options: AddOptions): Promise<void> {
+  process.chdir(options.cwd)
+
   const configManager = new ConfigManager()
   await configManager.load()
 

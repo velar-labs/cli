@@ -23,7 +23,6 @@ export const init = new Command()
     'the base color to use. (neutral, gray, zinc, stone, slate)',
     undefined,
   )
-  .option('-y, --yes', 'skip confirmation prompt.', false)
   .option('-d, --defaults', 'use default configuration.', false)
   .option('-f, --force', 'force overwrite of existing configuration.', false)
   .option(
@@ -31,15 +30,12 @@ export const init = new Command()
     'the working directory. defaults to the current directory.',
     process.cwd(),
   )
-  .option('-s, --silent', 'mute output.', false)
   .action(async (opts) => {
     const options = initOptionsSchema.parse({
       baseColor: opts.baseColor,
-      yes: Boolean(opts.yes),
       defaults: Boolean(opts.defaults),
       force: Boolean(opts.force),
       cwd: path.resolve(opts.cwd),
-      silent: Boolean(opts.silent),
     })
 
     await initProject(options)

@@ -115,10 +115,9 @@ export class ComponentService {
     }
 
     // Fetch component metadata with files
-    const component = await this.registryService.fetchComponent(
-      componentName,
-      { includeFiles: true },
-    )
+    const component = await this.registryService.fetchComponent(componentName, {
+      includeFiles: true,
+    })
 
     // Resolve dependencies (fetch without files for dependencies)
     await this.registryService.resolveDependencies(component)
@@ -146,8 +145,10 @@ export class ComponentService {
 
     // Fetch files for the main component with content
     const componentWithFiles = await this.fetchComponentWithFiles(componentName)
-  
-    for (const [filePath, content] of Object.entries(componentWithFiles.files)) {
+
+    for (const [filePath, content] of Object.entries(
+      componentWithFiles.files,
+    )) {
       // Determine destination based on file type
       const dest = this.getDestinationPath(filePath)
       const fileType = getFileTypeFromPath(filePath)
@@ -157,7 +158,7 @@ export class ComponentService {
       if (existedBefore) {
         const action = await this.handleFileConflict(filePath)
         if (action === 'skip') {
-          result.skipped.push(`${componentName}/${filePath}`)
+          result.skipped.push(dest)
           continue
         } else if (action === 'cancel') {
           logger.error('Cancelled.')
@@ -178,9 +179,7 @@ export class ComponentService {
     if (plannedFiles.length > 0) {
       try {
         await this.applyFileBatch(plannedFiles)
-        plannedFiles.forEach((file) =>
-          result.added.push(`${file.componentName}/${file.filePath}`),
-        )
+        plannedFiles.forEach((file) => result.added.push(file.destPath))
 
         const jsComponents = new Set(
           plannedFiles
@@ -193,7 +192,7 @@ export class ComponentService {
       } catch (error) {
         plannedFiles.forEach((file) =>
           result.failed.push({
-            name: `${file.componentName}/${file.filePath}`,
+            name: file.destPath,
             error: (error as Error).message,
           }),
         )
@@ -215,12 +214,25 @@ export class ComponentService {
       npm?: string[]
     } = {}
 
-    if (component.requires && component.requires.length > 0) {
-      dependencies.composer = [...component.requires]
+    if (component.requires?.composer?.length) {
+      dependencies.composer = Array.from(new Set(component.requires.composer))
     }
 
-    if (component.requires_alpine) {
-      dependencies.npm = ['alpinejs']
+    const npmDependencies = component.requires?.npm
+      ? [...component.requires.npm]
+      : []
+
+    if (
+      component.requires_alpine &&
+      !npmDependencies.some(
+        (dep) => dep === 'alpinejs' || dep.startsWith('alpinejs@'),
+      )
+    ) {
+      npmDependencies.unshift('alpinejs')
+    }
+
+    if (npmDependencies.length > 0) {
+      dependencies.npm = Array.from(new Set(npmDependencies))
     }
 
     return Object.keys(dependencies).length > 0 ? dependencies : null

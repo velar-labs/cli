@@ -10,11 +10,9 @@ import { z } from 'zod'
 
 export const initOptionsSchema = z.object({
   baseColor: z.string().optional(),
-  yes: z.boolean(),
   defaults: z.boolean(),
   force: z.boolean(),
   cwd: z.string(),
-  silent: z.boolean(),
 })
 
 export type InitOptions = z.infer<typeof initOptionsSchema>
