@@ -71,7 +71,7 @@ describe('CLI add E2E', () => {
       }
       serverStops.push(server.stop)
 
-      const result = runCli(
+      const result = await runCli(
         ['add', 'button', '--cwd', projectPath],
         projectPath,
         {
@@ -128,7 +128,7 @@ describe('CLI add E2E', () => {
       }
       serverStops.push(server.stop)
 
-      const result = runCli(
+      const result = await runCli(
         ['add', 'range-slider', '--cwd', projectPath],
         projectPath,
         { VELYX_REGISTRY_URL: `${server.url}/api/v1` },
@@ -184,7 +184,7 @@ describe('CLI add E2E', () => {
       }
       serverStops.push(server.stop)
 
-      const result = runCli(
+      const result = await runCli(
         ['add', 'tabs', '--cwd', projectPath],
         projectPath,
         {
@@ -242,7 +242,7 @@ describe('CLI add E2E', () => {
       const projectPath = await createTempProjectFromFixture('laravel-minimal')
       projectPaths.push(projectPath)
 
-      const result = runCli(
+      const result = await runCli(
         ['add', 'button', '--cwd', projectPath],
         projectPath,
       )

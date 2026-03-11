@@ -24,7 +24,7 @@ describe('CLI E2E smoke', () => {
       const projectPath = await createTempProjectFromFixture('laravel-minimal')
       projectPaths.push(projectPath)
 
-      const result = runCli(
+      const result = await runCli(
         ['init', '--defaults', '--base-color', 'neutral', '--cwd', projectPath],
         projectPath,
       )

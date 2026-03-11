@@ -1,4 +1,4 @@
-import { spawnSync } from 'child_process'
+import { spawn } from 'child_process'
 import path from 'path'
 
 const DIST_ENTRY = path.resolve(process.cwd(), 'dist/index.js')
@@ -9,26 +9,42 @@ export type CliRunResult = {
   stderr: string
 }
 
-export function runCli(
+export async function runCli(
   args: readonly string[],
   cwd: string,
   env: Record<string, string> = {},
-): CliRunResult {
-  const run = spawnSync('node', [DIST_ENTRY, ...args], {
-    cwd,
-    encoding: 'utf8',
-    env: {
-      ...process.env,
-      FORCE_COLOR: '0',
-      ...env,
-    },
-  })
+): Promise<CliRunResult> {
+  return await new Promise((resolve, reject) => {
+    const child = spawn('node', [DIST_ENTRY, ...args], {
+      cwd,
+      env: {
+        ...process.env,
+        FORCE_COLOR: '0',
+        ...env,
+      },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    })
 
-  return {
-    status: run.status,
-    stdout: run.stdout ?? '',
-    stderr: run.stderr ?? '',
-  }
+    let stdout = ''
+    let stderr = ''
+
+    child.stdout.on('data', (chunk) => {
+      stdout += chunk.toString()
+    })
+
+    child.stderr.on('data', (chunk) => {
+      stderr += chunk.toString()
+    })
+
+    child.on('error', reject)
+    child.on('close', (status) => {
+      resolve({
+        status,
+        stdout,
+        stderr,
+      })
+    })
+  })
 }
 
 export function getDistEntryPath(): string {

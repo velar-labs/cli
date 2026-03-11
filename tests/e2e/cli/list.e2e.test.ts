@@ -65,7 +65,7 @@ describe('CLI list E2E', () => {
       }
       serverStops.push(server.stop)
 
-      const result = runCli(
+      const result = await runCli(
         ['list', '--json', '--cwd', projectPath],
         projectPath,
         {
@@ -77,7 +77,8 @@ describe('CLI list E2E', () => {
       expect(result.status).toBe(0)
       expect(output).toContain('"components"')
       expect(output).toContain('"name": "button"')
-      expect(output).toContain('"count": 1')
+      expect(output).toContain('"name": "tabs"')
+      expect(output).toContain('"count": 3')
     },
   )
 })
