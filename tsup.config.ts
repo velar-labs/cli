@@ -13,10 +13,6 @@ export default defineConfig({
   outDir: 'dist',
   treeshake: true,
   onSuccess: async () => {
-    cpSync('src/registry/themes', 'dist/registry/themes', {
-      recursive: true,
-      force: true,
-    })
     cpSync('src/colors', 'dist/colors', { recursive: true, force: true })
   },
 })

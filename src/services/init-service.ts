@@ -1,3 +1,4 @@
+import prompts from 'prompts'
 import type {
   VelyxConfig,
   PackageManager,
@@ -167,7 +168,33 @@ export class InitService {
         )
       }
     } else {
-      logger.info('velyx.css already exists')
+      // File exists, ask user if they want to override it
+      const { override } = await prompts(
+        {
+          type: 'confirm',
+          name: 'override',
+          message: `Velyx theme file already exists at "${targetPath}". Overwrite with current theme?`,
+          initial: false,
+        },
+        {
+          onCancel: () => {
+            logger.info('Keeping existing velyx.css')
+            return false
+          },
+        },
+      )
+
+      if (override) {
+        try {
+          copyTheme(theme, targetPath)
+          logger.success('Velyx theme updated')
+          logger.info(targetPath)
+        } catch (error) {
+          throw new Error(
+            `Failed to update theme file: ${(error as Error).message}`,
+          )
+        }
+      }
     }
   }
 

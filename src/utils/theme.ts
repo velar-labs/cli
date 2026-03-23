@@ -38,6 +38,7 @@ const entryDir = process.argv[1]
   ? path.dirname(path.resolve(process.argv[1]))
   : process.cwd()
 const COLORS_DIR = findColorsDir(entryDir)
+console.log('COLORS_DIR', COLORS_DIR)
 
 function loadBaseColors(): BaseColor[] {
   if (!fs.existsSync(COLORS_DIR)) {
@@ -78,6 +79,7 @@ function renderCssVars(vars: Record<string, string>): string[] {
  */
 export function copyTheme(theme: VelyxTheme, target: string): void {
   const baseColor = getBaseColor(theme)
+  console.log('Base', baseColor, theme)
   if (!baseColor) {
     throw new Error(`Theme "${theme}" not found in colors registry.`)
   }
